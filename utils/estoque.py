@@ -1,0 +1,180 @@
+# ====================================
+# BUSCAR VAGA
+# ====================================
+
+def buscar_vaga(vaga, dados_posicao):
+
+    vaga = str(
+        vaga
+    ).strip().upper()
+
+    resultados = []
+
+    for linha in dados_posicao:
+
+        vaga_planilha = str(
+            linha["Vaga"]
+        ).strip().upper()
+
+        if vaga_planilha == vaga:
+
+            resultados.append(linha)
+
+    vaga_existe = len(resultados) > 0
+
+    return {
+
+        "vaga_existe": vaga_existe,
+
+        "resultados": resultados
+
+    }
+
+
+# ====================================
+# BUSCAR PRODUTO
+# ====================================
+
+def buscar_produto(codigo, dados_bd):
+
+    codigo = str(
+        codigo
+    ).strip()
+
+    for produto in dados_bd:
+
+        codigo_bd = str(
+            produto["Código"]
+        ).strip()
+
+        if codigo_bd == codigo:
+
+            return {
+
+                "produto_encontrado": True,
+
+                "descricao": str(
+                    produto["Descrição"]
+                ).strip()
+
+            }
+
+    return {
+
+        "produto_encontrado": False,
+
+        "descricao": ""
+
+    }
+
+
+# ====================================
+# BUSCAR PRODUTO NA VAGA
+# ====================================
+
+def buscar_produto_vaga(
+
+    codigo,
+    resultados_vaga
+
+):
+
+    codigo = str(
+        codigo
+    ).strip()
+
+    for linha in resultados_vaga:
+
+        codigo_existente = str(
+            linha["Código"]
+        ).strip()
+
+        if codigo_existente == codigo:
+
+            return {
+
+                "produto_encontrado": True,
+
+                "linha": linha,
+
+                "quantidade": int(
+                    linha["Quantidade"]
+                )
+
+            }
+
+    return {
+
+        "produto_encontrado": False,
+
+        "linha": None,
+
+        "quantidade": 0
+
+    }
+
+
+# ====================================
+# VALIDAR SAÍDA
+# ====================================
+
+def validar_saida(
+
+    quantidade_atual,
+    quantidade_saida
+
+):
+
+    quantidade_atual = int(
+        quantidade_atual
+    )
+
+    quantidade_saida = int(
+        quantidade_saida
+    )
+
+    if quantidade_saida > quantidade_atual:
+
+        return {
+
+            "valido": False,
+
+            "mensagem": (
+                "Quantidade maior "
+                "que o saldo disponível"
+            )
+
+        }
+
+    return {
+
+        "valido": True,
+
+        "mensagem": ""
+
+    }
+
+
+# ====================================
+# É ÚLTIMO PRODUTO?
+# ====================================
+
+def ultimo_produto_vaga(
+
+    resultados_vaga
+
+):
+
+    total_produtos = 0
+
+    for linha in resultados_vaga:
+
+        codigo = str(
+            linha["Código"]
+        ).strip()
+
+        if codigo != "":
+
+            total_produtos += 1
+
+    return total_produtos == 1
