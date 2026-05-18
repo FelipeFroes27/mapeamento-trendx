@@ -196,6 +196,24 @@ usuario = st.text_input(
 
 
 # ====================================
+# REFERENCIA
+# ====================================
+
+referencia = st.text_input(
+    "Referência"
+).strip()
+
+
+# ====================================
+# OBSERVAÇÕES
+# ====================================
+
+observacoes = st.text_area(
+    "Observações"
+).strip()
+
+
+# ====================================
 # ANÁLISE DA VAGA
 # ====================================
 
@@ -346,7 +364,9 @@ if confirmar:
                 vaga,
                 codigo,
                 descricao,
-                quantidade
+                quantidade,
+                referencia,
+                observacoes
 
             ])
 
@@ -401,6 +421,20 @@ if confirmar:
 
                     )
 
+                    aba_posicao.update(
+
+                        f"G{linha_real}",
+                        [[referencia]]
+
+                    )
+
+                    aba_posicao.update(
+
+                        f"H{linha_real}",
+                        [[observacoes]]
+
+                    )
+
                     break
 
 
@@ -424,7 +458,9 @@ if confirmar:
                         vaga,
                         codigo,
                         descricao,
-                        quantidade
+                        quantidade,
+                        referencia,
+                        observacoes
 
                     ])
 
@@ -475,6 +511,20 @@ if confirmar:
 
                                 f"F{linha_real}",
                                 [[quantidade]]
+
+                            )
+
+                            aba_posicao.update(
+
+                                f"G{linha_real}",
+                                [[referencia]]
+
+                            )
+
+                            aba_posicao.update(
+
+                                f"H{linha_real}",
+                                [[observacoes]]
 
                             )
 
@@ -534,6 +584,20 @@ if confirmar:
 
                         f"F{linha_real}",
                         [[quantidade]]
+
+                    )
+
+                    aba_posicao.update(
+
+                        f"G{linha_real}",
+                        [[referencia]]
+
+                    )
+
+                    aba_posicao.update(
+
+                        f"H{linha_real}",
+                        [[observacoes]]
 
                     )
 
