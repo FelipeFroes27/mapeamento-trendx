@@ -321,22 +321,22 @@ if confirmar:
             "Digite a vaga"
         )
 
-    elif not codigo:
+    elif not usuario:
+
+        st.error(
+            "Digite o usuário"
+        )
+
+    elif vaga_existe and not codigo:
 
         st.error(
             "Digite o código"
         )
 
-    elif not descricao:
+    elif vaga_existe and not descricao:
 
         st.error(
             "Descrição inválida"
-        )
-
-    elif not usuario:
-
-        st.error(
-            "Digite o usuário"
         )
 
     else:
@@ -357,18 +357,43 @@ if confirmar:
 
         if not vaga_existe:
 
-            aba_posicao.append_row([
+            # ====================================
+            # VAGA NOVA COM PRODUTO
+            # ====================================
 
-                "OCUPADO",
-                data_atual,
-                vaga,
-                codigo,
-                descricao,
-                quantidade,
-                referencia,
-                observacoes
+            if codigo:
 
-            ])
+                aba_posicao.append_row([
+
+                    "OCUPADO",
+                    data_atual,
+                    vaga,
+                    codigo,
+                    descricao,
+                    quantidade,
+                    referencia,
+                    observacoes
+
+                ])
+
+            # ====================================
+            # VAGA NOVA VAZIA
+            # ====================================
+
+            else:
+
+                aba_posicao.append_row([
+
+                    "DISPONIVEL",
+                    data_atual,
+                    vaga,
+                    "",
+                    "",
+                    "",
+                    "",
+                    ""
+
+                ])
 
 
         # ====================================
