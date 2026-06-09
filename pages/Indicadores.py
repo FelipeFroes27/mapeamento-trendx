@@ -109,7 +109,7 @@ def donut_html(titulo, subtitulo, ranking, coluna):
         f'<div class="donut" style="--donut-gradient: conic-gradient({", ".join(segmentos)});"></div>'
         f'<div>{"".join(legenda)}</div>'
         f'</div>'
-        f'</div>',
+        f'</div>'
     )
 
 
