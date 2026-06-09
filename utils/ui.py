@@ -12,8 +12,6 @@ def aplicar_layout():
     st.markdown(
         """
         <style>
-        header,
-        header[data-testid="stHeader"],
         [data-testid="stToolbar"],
         [data-testid="stStatusWidget"],
         [data-testid="stDecoration"] {
@@ -24,6 +22,28 @@ def aplicar_layout():
             background: transparent !important;
             box-shadow: none !important;
             border: 0 !important;
+        }
+
+        header,
+        header[data-testid="stHeader"],
+        [data-testid="stHeader"] {
+            display: block !important;
+            visibility: visible !important;
+            height: 2.5rem !important;
+            min-height: 2.5rem !important;
+            background: #ffffff !important;
+            box-shadow: none !important;
+            border: 0 !important;
+        }
+
+        [data-testid="collapsedControl"],
+        [data-testid="stSidebarCollapsedControl"],
+        [data-testid="stSidebarCollapseButton"] {
+            display: flex !important;
+            visibility: visible !important;
+            opacity: 1 !important;
+            pointer-events: auto !important;
+            color: #000000 !important;
         }
 
         footer, #MainMenu {visibility: hidden !important;}
