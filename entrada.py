@@ -16,16 +16,20 @@ from utils.historico import (
     registrar_historico
 )
 
+from utils.ui import preparar_pagina
+
 
 # ====================================
-# MENU
+# LAYOUT
 # ====================================
 
-if st.button("⬅ MENU"):
+preparar_pagina(
+    "Entrada de Material",
+    "Cadastre vagas, inclua produtos e atualize saldos nas posições.",
+)
 
-    st.session_state.pagina = "menu"
-
-    st.rerun()
+if st.button("Voltar ao início"):
+    st.switch_page("app.py")
 
 
 # ====================================
@@ -51,13 +55,6 @@ if "dados_bd" not in st.session_state:
 dados_posicao = st.session_state.dados_posicao
 
 dados_bd = st.session_state.dados_bd
-
-
-# ====================================
-# TÍTULO
-# ====================================
-
-st.title("🟢 ENTRADA DE MATERIAL")
 
 
 # ====================================
@@ -334,6 +331,12 @@ if confirmar:
         )
 
     elif vaga_existe and not descricao:
+
+        st.error(
+            "Descrição inválida"
+        )
+
+    elif codigo and not descricao:
 
         st.error(
             "Descrição inválida"
@@ -631,16 +634,18 @@ if confirmar:
         # HISTÓRICO
         # ====================================
 
-        registrar_historico(
+        if codigo:
 
-            data_atual,
-            vaga,
-            codigo,
-            descricao,
-            quantidade,
-            usuario
+            registrar_historico(
 
-        )
+                data_atual,
+                vaga,
+                codigo,
+                descricao,
+                quantidade,
+                usuario
+
+            )
 
 
         # ====================================
@@ -661,9 +666,7 @@ if confirmar:
 
 
         # ====================================
-        # VOLTA MENU
+        # VOLTA INICIO
         # ====================================
 
-        st.session_state.pagina = "menu"
-
-        st.rerun()
+        st.switch_page("app.py")

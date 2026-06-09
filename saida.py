@@ -19,16 +19,20 @@ from utils.historico import (
     registrar_historico
 )
 
+from utils.ui import preparar_pagina
+
 
 # ====================================
-# MENU
+# LAYOUT
 # ====================================
 
-if st.button("⬅ MENU"):
+preparar_pagina(
+    "Saída de Material",
+    "Retire produtos, atualize saldos e libere vagas disponíveis.",
+)
 
-    st.session_state.pagina = "menu"
-
-    st.rerun()
+if st.button("Voltar ao início"):
+    st.switch_page("app.py")
 
 
 # ====================================
@@ -44,13 +48,6 @@ if "dados_posicao" not in st.session_state:
 
 
 dados_posicao = st.session_state.dados_posicao
-
-
-# ====================================
-# TÍTULO
-# ====================================
-
-st.title("🔴 SAÍDA DE MATERIAL")
 
 
 # ====================================
@@ -186,9 +183,15 @@ quantidade_atual = 0
 
 if linha_produto:
 
-    quantidade_atual = int(
-        linha_produto["Quantidade"]
-    )
+    try:
+
+        quantidade_atual = int(
+            linha_produto["Quantidade"]
+        )
+
+    except (TypeError, ValueError):
+
+        quantidade_atual = 0
 
     st.info(
         f"Quantidade atual: {quantidade_atual}"
@@ -388,6 +391,22 @@ if confirmar:
 
                     )
 
+                    aba_posicao.update(
+
+                        f"G{linha_real}",
+
+                        [[""]]
+
+                    )
+
+                    aba_posicao.update(
+
+                        f"H{linha_real}",
+
+                        [[""]]
+
+                    )
+
 
                 # ====================================
                 # EXISTEM OUTROS PRODUTOS
@@ -434,9 +453,7 @@ if confirmar:
 
 
             # ====================================
-            # VOLTA MENU
+            # VOLTA INICIO
             # ====================================
 
-            st.session_state.pagina = "menu"
-
-            st.rerun()
+            st.switch_page("app.py")
