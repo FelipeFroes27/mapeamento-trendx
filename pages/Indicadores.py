@@ -70,25 +70,21 @@ def render_barras(titulo, subtitulo, df, coluna_nome, coluna_valor="Quantidade",
         valor = int(linha[coluna_valor])
         largura = max(int((valor / maximo) * 100), 2) if valor > 0 else 0
         linhas.append(
-            f"""
-            <div class="bar-row">
-                <div class="bar-name" title="{nome}">{nome}</div>
-                <div class="bar-track"><div class="bar-fill" style="width:{largura}%;"></div></div>
-                <div class="bar-value">{numero(valor)}</div>
-            </div>
-            """
+            f'<div class="bar-row">'
+            f'<div class="bar-name" title="{nome}">{nome}</div>'
+            f'<div class="bar-track"><div class="bar-fill" style="width:{largura}%;"></div></div>'
+            f'<div class="bar-value">{numero(valor)}</div>'
+            f'</div>'
         )
 
     conteudo = "".join(linhas) if linhas else '<div class="kpi-note">Sem dados para exibir.</div>'
 
     st.markdown(
-        f"""
-        <div class="chart-panel">
-            <div class="panel-title">{escape(titulo)}</div>
-            <div class="panel-subtitle">{escape(subtitulo)}</div>
-            {conteudo}
-        </div>
-        """,
+        f'<div class="chart-panel">'
+        f'<div class="panel-title">{escape(titulo)}</div>'
+        f'<div class="panel-subtitle">{escape(subtitulo)}</div>'
+        f'{conteudo}'
+        f'</div>',
         unsafe_allow_html=True,
     )
 
@@ -112,17 +108,15 @@ def render_tabela(titulo, df, colunas, limite=18):
     corpo = "".join(linhas) if linhas else f"<tr><td colspan='{len(colunas)}'>Sem dados.</td></tr>"
 
     st.markdown(
-        f"""
-        <div class="chart-panel">
-            <div class="panel-title">{escape(titulo)}</div>
-            <div class="table-scroll">
-                <table class="mini-table">
-                    <thead><tr>{cabecalho}</tr></thead>
-                    <tbody>{corpo}</tbody>
-                </table>
-            </div>
-        </div>
-        """,
+        f'<div class="chart-panel">'
+        f'<div class="panel-title">{escape(titulo)}</div>'
+        f'<div class="table-scroll">'
+        f'<table class="mini-table">'
+        f'<thead><tr>{cabecalho}</tr></thead>'
+        f'<tbody>{corpo}</tbody>'
+        f'</table>'
+        f'</div>'
+        f'</div>',
         unsafe_allow_html=True,
     )
 
@@ -158,20 +152,17 @@ col_ocupacao, col_status, col_top_vagas = st.columns([1.05, 1.05, 1.4], gap="med
 
 with col_ocupacao:
     st.markdown(
-        f"""
-        <div class="chart-panel">
-            <div class="panel-title">Ocupação geral</div>
-            <div class="panel-subtitle">Percentual de vagas ocupadas no mapa.</div>
-            <div class="split-bar" style="--ocupado:{percentual_ocupado}%;">
-                <div class="occupied"></div>
-                <div></div>
-            </div>
-            <div class="split-labels">
-                <span>{percentual_ocupado}% ocupado</span>
-                <span>{100 - percentual_ocupado}% disponível</span>
-            </div>
-        </div>
-        """,
+        f'<div class="chart-panel">'
+        f'<div class="panel-title">Ocupação geral</div>'
+        f'<div class="panel-subtitle">Percentual de vagas ocupadas no mapa.</div>'
+        f'<div class="split-bar" style="--ocupado:{percentual_ocupado}%;">'
+        f'<div class="occupied"></div><div></div>'
+        f'</div>'
+        f'<div class="split-labels">'
+        f'<span>{percentual_ocupado}% ocupado</span>'
+        f'<span>{100 - percentual_ocupado}% disponível</span>'
+        f'</div>'
+        f'</div>',
         unsafe_allow_html=True,
     )
 

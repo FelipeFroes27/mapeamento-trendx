@@ -17,7 +17,7 @@ from utils.ui import preparar_pagina
 st.set_page_config(
     page_title="Consulta | Mapeamento Trendx",
     layout="wide",
-    initial_sidebar_state="collapsed",
+    initial_sidebar_state="expanded",
 )
 
 preparar_pagina(

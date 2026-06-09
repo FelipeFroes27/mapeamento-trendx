@@ -59,6 +59,15 @@ def aplicar_layout():
             padding-bottom: 1.25rem;
         }
 
+        div[data-testid="stVerticalBlock"] {
+            gap: .3cm !important;
+        }
+
+        div[data-testid="column"] {
+            padding-left: .15cm !important;
+            padding-right: .15cm !important;
+        }
+
         .sidebar-logo {
             display: flex;
             gap: 8px;
@@ -235,9 +244,9 @@ def aplicar_layout():
 
         .chart-panel {
             border: 2px solid #000000;
-            border-radius: 12px;
+            border-radius: 8px;
             background: #ffffff;
-            padding: 16px;
+            padding: 12px;
             min-height: 100%;
         }
 
@@ -246,7 +255,7 @@ def aplicar_layout():
             grid-template-columns: minmax(96px, 1fr) 2.4fr 74px;
             align-items: center;
             gap: 12px;
-            margin: 13px 0;
+            margin: 9px 0;
         }
 
         .bar-name {
