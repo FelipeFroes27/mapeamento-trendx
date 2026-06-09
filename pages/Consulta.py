@@ -1,3 +1,5 @@
+from html import escape
+
 import pandas as pd
 import streamlit as st
 
@@ -15,12 +17,13 @@ from utils.ui import preparar_pagina
 st.set_page_config(
     page_title="Consulta | Mapeamento Trendx",
     layout="wide",
-    initial_sidebar_state="expanded",
+    initial_sidebar_state="collapsed",
 )
 
 preparar_pagina(
     "Consulta",
     "Consulte vagas, produtos em posição, histórico de movimentações e cadastro auxiliar do item.",
+    mobile=True,
 )
 
 
@@ -36,20 +39,22 @@ def carregar_dados_consulta():
 df_posicao, df_historico, df_bd = carregar_dados_consulta()
 df_ocupado = produtos_ocupados(df_posicao)
 
-col_busca_1, col_busca_2, col_busca_3 = st.columns([1, 1, .55])
+vagas = []
+if "Vaga" in df_posicao.columns:
+    vagas = sorted(vaga for vaga in df_posicao["Vaga"].dropna().astype(str).str.strip().unique() if vaga)
 
-with col_busca_1:
-    vaga = st.text_input("Vaga").strip().upper()
+vaga_opcao = st.selectbox(
+    "Vaga",
+    [""] + vagas,
+    format_func=lambda valor: "Selecione ou digite para buscar..." if valor == "" else valor,
+)
+vaga = str(vaga_opcao).strip().upper()
 
-with col_busca_2:
-    codigo = st.text_input("Código do produto").strip()
+codigo = st.text_input("Código do produto").strip()
 
-with col_busca_3:
-    st.write("")
-    st.write("")
-    if st.button("Atualizar", use_container_width=True):
-        st.cache_data.clear()
-        st.rerun()
+if st.button("Atualizar", use_container_width=True):
+    st.cache_data.clear()
+    st.rerun()
 
 if not vaga and not codigo:
     st.info("Digite uma vaga, um código de produto ou ambos para consultar.")
@@ -78,7 +83,7 @@ if vaga:
             ]
             if coluna in df_vaga.columns
         ]
-        st.dataframe(df_vaga[colunas_vaga], use_container_width=True, hide_index=True)
+        st.dataframe(df_vaga[colunas_vaga], use_container_width=True, hide_index=True, height=220)
 
 if codigo:
     st.markdown('<div class="panel-title">Informações do item</div>', unsafe_allow_html=True)
@@ -86,13 +91,22 @@ if codigo:
     df_item_posicao = df_ocupado[df_ocupado["Código"] == codigo].copy() if "Código" in df_ocupado.columns else pd.DataFrame()
     df_item_bd = df_bd[df_bd["Código"] == codigo].copy() if "Código" in df_bd.columns else pd.DataFrame()
 
-    k1, k2, k3 = st.columns(3)
-    with k1:
-        st.metric("Vagas com saldo", df_item_posicao["Vaga"].nunique() if not df_item_posicao.empty else 0)
-    with k2:
-        st.metric("Saldo total", int(df_item_posicao["Quantidade"].sum()) if "Quantidade" in df_item_posicao.columns else 0)
-    with k3:
-        st.metric("Movimentações", len(df_historico[df_historico["Código"] == codigo]) if "Código" in df_historico.columns else 0)
+    vagas_saldo = df_item_posicao["Vaga"].nunique() if not df_item_posicao.empty else 0
+    saldo_total = int(df_item_posicao["Quantidade"].sum()) if "Quantidade" in df_item_posicao.columns else 0
+    movimentacoes = len(df_historico[df_historico["Código"] == codigo]) if "Código" in df_historico.columns else 0
+
+    st.markdown(
+        f"""
+        <div class="insight-grid" style="grid-template-columns: 1fr;">
+            <div class="insight">
+                <div class="insight-label">Resumo do item</div>
+                <div class="insight-value">{escape(str(vagas_saldo))} vaga(s) | {escape(str(saldo_total))} peças</div>
+                <div class="kpi-note">{escape(str(movimentacoes))} movimentação(ões) no histórico</div>
+            </div>
+        </div>
+        """,
+        unsafe_allow_html=True,
+    )
 
     if not df_item_bd.empty:
         colunas_bd = [
@@ -100,7 +114,7 @@ if codigo:
             for coluna in ["Código", "Descrição", "Categoria", "Tipo", "Marca", "Grupo", "Subgrupo", "Referência"]
             if coluna in df_item_bd.columns
         ]
-        st.dataframe(df_item_bd[colunas_bd].head(1), use_container_width=True, hide_index=True)
+        st.dataframe(df_item_bd[colunas_bd].head(1), use_container_width=True, hide_index=True, height=120)
     else:
         st.warning("Produto não encontrado na aba auxiliar BD PRODUTOS.")
 
@@ -111,7 +125,7 @@ if codigo:
             for coluna in ["Vaga", "Status", "Data", "Descrição", "Quantidade", "Categoria", "Tipo", "Marca"]
             if coluna in df_item_posicao.columns
         ]
-        st.dataframe(df_item_posicao[colunas_item], use_container_width=True, hide_index=True)
+        st.dataframe(df_item_posicao[colunas_item], use_container_width=True, hide_index=True, height=180)
 
 st.markdown('<div class="panel-title">Histórico</div>', unsafe_allow_html=True)
 df_hist_filtrado = df_historico.copy()

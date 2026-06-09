@@ -26,6 +26,7 @@ from utils.ui import preparar_pagina
 preparar_pagina(
     "Entrada de Material",
     "Cadastre vagas, inclua produtos e atualize saldos nas posições.",
+    mobile=True,
 )
 
 if st.button("Voltar ao início"):

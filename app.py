@@ -27,31 +27,21 @@ st.markdown(
             </p>
         </div>
         <div class="home-panel">
-            <div class="home-panel-title">Operações principais</div>
+            <div class="home-panel-title">Como o sistema está organizado</div>
             <div class="home-section">
-                Entrada
-                <span>Cadastrar vaga, inserir produto, somar saldo ou substituir item.</span>
+                POSIÇÃO
+                <span>Base principal do mapa: vagas, status, produtos, saldos e observações.</span>
             </div>
             <div class="home-section">
-                Saída
-                <span>Retirar produtos da vaga, baixar saldo e liberar posições.</span>
+                HISTÓRICO
+                <span>Registro das movimentações de entrada e saída feitas no estoque.</span>
             </div>
             <div class="home-section">
-                Consulta e indicadores
-                <span>Ver produtos, histórico, dados do item e leitura de ocupação.</span>
+                BD PRODUTOS
+                <span>Cadastro auxiliar para classificar produto por categoria, tipo e marca.</span>
             </div>
         </div>
     </div>
     """,
     unsafe_allow_html=True,
 )
-
-col1, col2 = st.columns(2)
-
-with col1:
-    if st.button("Entrada", use_container_width=True):
-        st.switch_page("pages/Entrada.py")
-
-with col2:
-    if st.button("Saída", use_container_width=True):
-        st.switch_page("pages/Saida.py")

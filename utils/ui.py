@@ -171,6 +171,13 @@ def aplicar_layout():
             font-weight: 850;
         }
 
+        .panel-subtitle {
+            margin: -6px 0 12px 0;
+            color: #555555;
+            font-size: 12px;
+            font-weight: 650;
+        }
+
         .home-section {
             display: block;
             padding: 12px 14px;
@@ -226,6 +233,155 @@ def aplicar_layout():
             font-size: 12px;
         }
 
+        .chart-panel {
+            border: 2px solid #000000;
+            border-radius: 12px;
+            background: #ffffff;
+            padding: 16px;
+            min-height: 100%;
+        }
+
+        .bar-row {
+            display: grid;
+            grid-template-columns: minmax(96px, 1fr) 2.4fr 74px;
+            align-items: center;
+            gap: 12px;
+            margin: 13px 0;
+        }
+
+        .bar-name {
+            color: #000000;
+            font-size: 13px;
+            font-weight: 800;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+
+        .bar-track {
+            height: 14px;
+            border: 2px solid #000000;
+            border-radius: 999px;
+            background: #ffffff;
+            overflow: hidden;
+        }
+
+        .bar-fill {
+            height: 100%;
+            background: #000000;
+            border-radius: 999px;
+        }
+
+        .bar-value {
+            color: #000000;
+            font-size: 12px;
+            font-weight: 800;
+            text-align: right;
+            white-space: nowrap;
+        }
+
+        .split-bar {
+            display: grid;
+            grid-template-columns: var(--ocupado, 0%) 1fr;
+            height: 36px;
+            border: 2px solid #000000;
+            border-radius: 999px;
+            overflow: hidden;
+            background: #ffffff;
+        }
+
+        .split-bar .occupied {
+            background: #000000;
+        }
+
+        .split-labels {
+            display: flex;
+            justify-content: space-between;
+            gap: 12px;
+            margin-top: 8px;
+            color: #000000;
+            font-size: 12px;
+            font-weight: 800;
+        }
+
+        .mini-table {
+            width: 100%;
+            border-collapse: collapse;
+            overflow: hidden;
+            border: 2px solid #000000;
+            border-radius: 12px;
+            font-size: 13px;
+        }
+
+        .mini-table th {
+            padding: 10px 12px;
+            border: 1px solid #000000;
+            background: #000000;
+            color: #ffffff;
+            text-align: left;
+            font-weight: 850;
+        }
+
+        .mini-table td {
+            padding: 10px 12px;
+            border: 1px solid #000000;
+            color: #000000;
+            background: #ffffff;
+        }
+
+        .mini-table td.num,
+        .mini-table th.num {
+            text-align: right;
+        }
+
+        .table-scroll {
+            max-height: 520px;
+            overflow: auto;
+            border: 2px solid #000000;
+            border-radius: 12px;
+        }
+
+        .table-scroll .mini-table {
+            border: 0;
+            border-radius: 0;
+        }
+
+        .table-scroll .mini-table th {
+            position: sticky;
+            top: 0;
+            z-index: 2;
+        }
+
+        .insight-grid {
+            display: grid;
+            grid-template-columns: repeat(3, minmax(0, 1fr));
+            gap: 12px;
+        }
+
+        .insight {
+            border: 2px solid #000000;
+            border-radius: 12px;
+            padding: 14px;
+            background: #ffffff;
+        }
+
+        .insight-label {
+            color: #555555;
+            font-size: 11px;
+            font-weight: 850;
+            text-transform: uppercase;
+        }
+
+        .insight-value {
+            margin-top: 5px;
+            color: #000000;
+            font-size: 16px;
+            font-weight: 850;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+
         @media (max-width: 900px) {
             .page-head,
             .home-hero {
@@ -236,6 +392,76 @@ def aplicar_layout():
             .home-title {
                 font-size: 28px;
             }
+        }
+        </style>
+        """,
+        unsafe_allow_html=True,
+    )
+
+
+def aplicar_layout_mobile():
+    st.markdown(
+        """
+        <style>
+        .block-container,
+        [data-testid="stMainBlockContainer"] {
+            max-width: 480px !important;
+            padding-left: .85rem !important;
+            padding-right: .85rem !important;
+            padding-top: .35rem !important;
+        }
+
+        [data-testid="stSidebar"] {
+            width: 15.5rem !important;
+            min-width: 15.5rem !important;
+        }
+
+        .page-head {
+            gap: 10px;
+            margin-bottom: .75rem;
+        }
+
+        .page-title h1 {
+            font-size: 23px;
+        }
+
+        .page-title p {
+            font-size: 12px;
+            line-height: 1.35;
+        }
+
+        .page-logos img {
+            max-height: 24px;
+            max-width: 82px;
+        }
+
+        .stButton > button {
+            min-height: 44px;
+        }
+
+        div[data-testid="stDataFrame"],
+        div[data-testid="stTable"] {
+            font-size: 12px;
+        }
+
+        .kpi-card,
+        .panel,
+        .chart-panel {
+            padding: 12px;
+            border-radius: 10px;
+        }
+
+        .kpi-value {
+            font-size: 24px;
+        }
+
+        .mini-table {
+            font-size: 12px;
+        }
+
+        .mini-table th,
+        .mini-table td {
+            padding: 8px;
         }
         </style>
         """,
@@ -289,8 +515,10 @@ def render_cabecalho(titulo, subtitulo=""):
     )
 
 
-def preparar_pagina(titulo, subtitulo=""):
+def preparar_pagina(titulo, subtitulo="", mobile=False):
     aplicar_layout()
+    if mobile:
+        aplicar_layout_mobile()
     render_menu_lateral()
     render_cabecalho(titulo, subtitulo)
 
