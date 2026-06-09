@@ -12,6 +12,9 @@ def aplicar_layout():
     st.markdown(
         """
         <style>
+        header,
+        header[data-testid="stHeader"],
+        [data-testid="stHeader"],
         [data-testid="stToolbar"],
         [data-testid="stStatusWidget"],
         [data-testid="stDecoration"] {
@@ -24,26 +27,11 @@ def aplicar_layout():
             border: 0 !important;
         }
 
-        header,
-        header[data-testid="stHeader"],
-        [data-testid="stHeader"] {
-            display: block !important;
-            visibility: visible !important;
-            height: 2.5rem !important;
-            min-height: 2.5rem !important;
-            background: #ffffff !important;
-            box-shadow: none !important;
-            border: 0 !important;
-        }
-
         [data-testid="collapsedControl"],
         [data-testid="stSidebarCollapsedControl"],
         [data-testid="stSidebarCollapseButton"] {
-            display: flex !important;
-            visibility: visible !important;
-            opacity: 1 !important;
-            pointer-events: auto !important;
-            color: #000000 !important;
+            display: none !important;
+            visibility: hidden !important;
         }
 
         footer, #MainMenu {visibility: hidden !important;}
@@ -507,6 +495,15 @@ def _imagem_base64(caminho):
 
 
 def render_menu_lateral():
+    if "menu_lateral_aberto" not in st.session_state:
+        st.session_state.menu_lateral_aberto = True
+
+    if st.button("Menu", key="menu_lateral_toggle"):
+        st.session_state.menu_lateral_aberto = not st.session_state.menu_lateral_aberto
+        st.rerun()
+
+    _aplicar_layout_menu(st.session_state.menu_lateral_aberto)
+
     with st.sidebar:
         st.markdown('<div class="sidebar-logo">', unsafe_allow_html=True)
         if Path(LOGO_BRANCO).exists():
@@ -520,6 +517,90 @@ def render_menu_lateral():
         st.page_link("pages/Saida.py", label="Saída")
         st.page_link("pages/Consulta.py", label="Consulta")
         st.page_link("pages/Indicadores.py", label="Indicadores")
+
+
+def _aplicar_layout_menu(menu_aberto):
+    left = "18.85rem" if menu_aberto else "0.75rem"
+    sidebar_css = (
+        """
+        [data-testid="stSidebar"] {
+            display: flex !important;
+            visibility: visible !important;
+            opacity: 1 !important;
+            position: fixed !important;
+            left: 0 !important;
+            top: 0 !important;
+            bottom: 0 !important;
+            transform: translateX(0) !important;
+            min-width: 17.75rem !important;
+            width: 17.75rem !important;
+            max-width: 17.75rem !important;
+            height: 100vh !important;
+            background: #ffffff !important;
+            border-right: 1px solid #000000 !important;
+            z-index: 999998 !important;
+            overflow-y: auto !important;
+        }
+
+        [data-testid="stSidebar"] > div,
+        [data-testid="stSidebarContent"],
+        [data-testid="stSidebarUserContent"] {
+            display: block !important;
+            visibility: visible !important;
+            opacity: 1 !important;
+            width: 100% !important;
+        }
+        """
+        if menu_aberto
+        else """
+        [data-testid="stSidebar"] {
+            display: none !important;
+            visibility: hidden !important;
+            opacity: 0 !important;
+        }
+        """
+    )
+
+    st.markdown(
+        f"""
+        <style>
+        {sidebar_css}
+
+        .st-key-menu_lateral_toggle {{
+            position: fixed !important;
+            top: .55rem !important;
+            left: {left} !important;
+            z-index: 999999 !important;
+            width: 82px !important;
+            height: 0 !important;
+            margin: 0 !important;
+            padding: 0 !important;
+            overflow: visible !important;
+        }}
+
+        .st-key-menu_lateral_toggle button {{
+            min-height: 36px !important;
+            padding: 0 14px !important;
+            border: 2px solid #000000 !important;
+            border-radius: 8px !important;
+            background: #ffffff !important;
+            color: #000000 !important;
+            font-weight: 800 !important;
+            box-shadow: none !important;
+        }}
+
+        div[data-testid="stVerticalBlock"]:has(.st-key-menu_lateral_toggle),
+        div[data-testid="stElementContainer"]:has(.st-key-menu_lateral_toggle) {{
+            height: 0 !important;
+            min-height: 0 !important;
+            margin: 0 !important;
+            padding: 0 !important;
+            overflow: visible !important;
+        }}
+        </style>
+        """,
+        unsafe_allow_html=True,
+    )
 
 
 def render_cabecalho(titulo, subtitulo=""):
