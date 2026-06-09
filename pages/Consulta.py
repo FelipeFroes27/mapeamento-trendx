@@ -39,6 +39,63 @@ def carregar_dados_consulta():
 df_posicao, df_historico, df_bd = carregar_dados_consulta()
 df_ocupado = produtos_ocupados(df_posicao)
 
+
+def render_cards(df, titulo, colunas, limite=8):
+    st.markdown(f'<div class="panel-title">{escape(titulo)}</div>', unsafe_allow_html=True)
+
+    if df.empty:
+        st.caption("Sem registros para exibir.")
+        return
+
+    for _, linha in df.head(limite).iterrows():
+        titulo_card = " | ".join(str(linha.get(coluna, "")).strip() for coluna in colunas[:2] if str(linha.get(coluna, "")).strip())
+        subtitulo = str(linha.get("Descrição", "")).strip()
+        pills = []
+
+        for coluna in colunas[2:]:
+            valor = str(linha.get(coluna, "")).strip()
+            if valor:
+                pills.append(f'<span class="mobile-pill">{escape(coluna)}: {escape(valor)}</span>')
+
+        st.markdown(
+            f"""
+            <div class="mobile-card">
+                <div class="mobile-card-title">{escape(titulo_card or "Registro")}</div>
+                <div class="mobile-card-subtitle">{escape(subtitulo)}</div>
+                <div class="mobile-card-meta">{''.join(pills)}</div>
+            </div>
+            """,
+            unsafe_allow_html=True,
+        )
+
+
+def render_tabela_compacta(titulo, df, colunas, limite=10):
+    st.markdown(f'<div class="panel-title">{escape(titulo)}</div>', unsafe_allow_html=True)
+
+    if df.empty:
+        st.caption("Sem registros para exibir.")
+        return
+
+    cabecalho = "".join(f"<th>{escape(coluna)}</th>" for coluna in colunas)
+    linhas = []
+
+    for _, linha in df.head(limite).iterrows():
+        celulas = "".join(f"<td>{escape(str(linha.get(coluna, '')))}</td>" for coluna in colunas)
+        linhas.append(f"<tr>{celulas}</tr>")
+
+    st.markdown(
+        f"""
+        <div class="table-scroll" style="max-height: 320px;">
+            <table class="mini-table">
+                <thead><tr>{cabecalho}</tr></thead>
+                <tbody>{''.join(linhas)}</tbody>
+            </table>
+        </div>
+        """,
+        unsafe_allow_html=True,
+    )
+
+
 vagas = []
 if "Vaga" in df_posicao.columns:
     vagas = sorted(vaga for vaga in df_posicao["Vaga"].dropna().astype(str).str.strip().unique() if vaga)
@@ -60,7 +117,6 @@ if not vaga and not codigo:
     st.info("Digite uma vaga, um código de produto ou ambos para consultar.")
 
 if vaga:
-    st.markdown('<div class="panel-title">Produtos da vaga</div>', unsafe_allow_html=True)
     df_vaga = df_posicao[df_posicao["Vaga"] == vaga].copy() if "Vaga" in df_posicao.columns else pd.DataFrame()
 
     if df_vaga.empty:
@@ -83,7 +139,7 @@ if vaga:
             ]
             if coluna in df_vaga.columns
         ]
-        st.dataframe(df_vaga[colunas_vaga], use_container_width=True, hide_index=True, height=220)
+        render_cards("Produtos da vaga", df_vaga[colunas_vaga], ["Código", "Quantidade", "Status", "Categoria", "Tipo", "Marca", "Referência"])
 
 if codigo:
     st.markdown('<div class="panel-title">Informações do item</div>', unsafe_allow_html=True)
@@ -114,20 +170,18 @@ if codigo:
             for coluna in ["Código", "Descrição", "Categoria", "Tipo", "Marca", "Grupo", "Subgrupo", "Referência"]
             if coluna in df_item_bd.columns
         ]
-        st.dataframe(df_item_bd[colunas_bd].head(1), use_container_width=True, hide_index=True, height=120)
+        render_cards("Cadastro auxiliar", df_item_bd[colunas_bd].head(1), ["Código", "Marca", "Categoria", "Tipo", "Grupo", "Subgrupo", "Referência"])
     else:
         st.warning("Produto não encontrado na aba auxiliar BD PRODUTOS.")
 
     if not df_item_posicao.empty:
-        st.markdown('<div class="panel-title">Vagas onde o item está alocado</div>', unsafe_allow_html=True)
         colunas_item = [
             coluna
             for coluna in ["Vaga", "Status", "Data", "Descrição", "Quantidade", "Categoria", "Tipo", "Marca"]
             if coluna in df_item_posicao.columns
         ]
-        st.dataframe(df_item_posicao[colunas_item], use_container_width=True, hide_index=True, height=180)
+        render_cards("Vagas onde o item está alocado", df_item_posicao[colunas_item], ["Vaga", "Quantidade", "Status", "Categoria", "Tipo", "Marca", "Data"])
 
-st.markdown('<div class="panel-title">Histórico</div>', unsafe_allow_html=True)
 df_hist_filtrado = df_historico.copy()
 
 if vaga and "Vaga" in df_hist_filtrado.columns:
@@ -146,6 +200,7 @@ colunas_historico = [
 ]
 
 if df_hist_filtrado.empty:
+    st.markdown('<div class="panel-title">Histórico</div>', unsafe_allow_html=True)
     st.caption("Sem movimentações para os filtros informados.")
 else:
-    st.dataframe(df_hist_filtrado[colunas_historico], use_container_width=True, hide_index=True, height=420)
+    render_tabela_compacta("Histórico", df_hist_filtrado[colunas_historico], colunas_historico, 20)

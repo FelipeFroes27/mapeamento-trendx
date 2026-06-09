@@ -1,6 +1,6 @@
 import streamlit as st
 
-from utils.ui import aplicar_layout, render_menu_lateral, render_cabecalho
+from utils.ui import preparar_pagina
 
 
 st.set_page_config(
@@ -9,11 +9,10 @@ st.set_page_config(
     initial_sidebar_state="expanded",
 )
 
-aplicar_layout()
-render_menu_lateral()
-render_cabecalho(
+preparar_pagina(
     "Mapeamento Trendx",
     "Controle de vagas, produtos, entradas, saídas e disponibilidade logística.",
+    mobile=True,
 )
 
 st.markdown(

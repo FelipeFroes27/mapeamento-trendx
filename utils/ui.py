@@ -180,6 +180,12 @@ def aplicar_layout():
             padding: 16px;
         }
 
+        .kpi-card,
+        .chart-panel,
+        .panel {
+            margin-bottom: .3cm !important;
+        }
+
         .home-panel-title,
         .panel-title {
             margin: 0 0 12px 0;
@@ -399,6 +405,48 @@ def aplicar_layout():
             white-space: nowrap;
         }
 
+        .mobile-card {
+            border: 2px solid #000000;
+            border-radius: 10px;
+            background: #ffffff;
+            padding: 12px;
+            margin-bottom: .3cm;
+        }
+
+        .mobile-card-title {
+            color: #000000;
+            font-size: 14px;
+            font-weight: 850;
+            line-height: 1.25;
+        }
+
+        .mobile-card-subtitle {
+            margin-top: 4px;
+            color: #333333;
+            font-size: 12px;
+            line-height: 1.35;
+        }
+
+        .mobile-card-meta {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 6px;
+            margin-top: 10px;
+        }
+
+        .mobile-pill {
+            display: inline-flex;
+            align-items: center;
+            min-height: 26px;
+            padding: 4px 8px;
+            border: 1px solid #000000;
+            border-radius: 999px;
+            background: #ffffff;
+            color: #000000;
+            font-size: 11px;
+            font-weight: 800;
+        }
+
         @media (max-width: 900px) {
             .page-head,
             .home-hero {
@@ -406,7 +454,7 @@ def aplicar_layout():
                 flex-direction: column;
             }
 
-            .home-title {
+        .home-title {
                 font-size: 28px;
             }
         }
@@ -426,6 +474,28 @@ def aplicar_layout_mobile():
             padding-left: .85rem !important;
             padding-right: .85rem !important;
             padding-top: .35rem !important;
+        }
+
+        .home-hero {
+            min-height: auto;
+            padding: 16px;
+            border-radius: 12px;
+            gap: 14px;
+        }
+
+        .home-title {
+            font-size: 26px !important;
+            line-height: 1.08;
+        }
+
+        .home-copy {
+            font-size: 14px;
+            line-height: 1.45;
+        }
+
+        .home-panel {
+            padding: 12px;
+            border-radius: 10px;
         }
 
         [data-testid="stSidebar"] {
@@ -496,7 +566,7 @@ def _imagem_base64(caminho):
 
 def render_menu_lateral():
     if "menu_lateral_aberto" not in st.session_state:
-        st.session_state.menu_lateral_aberto = True
+        st.session_state.menu_lateral_aberto = False
 
     if st.button("Menu", key="menu_lateral_toggle"):
         st.session_state.menu_lateral_aberto = not st.session_state.menu_lateral_aberto
@@ -567,15 +637,13 @@ def _aplicar_layout_menu(menu_aberto):
         {sidebar_css}
 
         .st-key-menu_lateral_toggle {{
-            position: fixed !important;
-            top: .55rem !important;
+            position: sticky !important;
+            top: .35rem !important;
             left: {left} !important;
             z-index: 999999 !important;
             width: 82px !important;
-            height: 0 !important;
-            margin: 0 !important;
+            margin: 0 0 .3cm 0 !important;
             padding: 0 !important;
-            overflow: visible !important;
         }}
 
         .st-key-menu_lateral_toggle button {{
@@ -589,14 +657,6 @@ def _aplicar_layout_menu(menu_aberto):
             box-shadow: none !important;
         }}
 
-        div[data-testid="stVerticalBlock"]:has(.st-key-menu_lateral_toggle),
-        div[data-testid="stElementContainer"]:has(.st-key-menu_lateral_toggle) {{
-            height: 0 !important;
-            min-height: 0 !important;
-            margin: 0 !important;
-            padding: 0 !important;
-            overflow: visible !important;
-        }}
         </style>
         """,
         unsafe_allow_html=True,

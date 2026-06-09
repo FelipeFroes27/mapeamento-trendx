@@ -29,6 +29,7 @@ from utils.ui import preparar_pagina
 preparar_pagina(
     "Saída de Material",
     "Retire produtos, atualize saldos e libere vagas disponíveis.",
+    mobile=True,
 )
 
 if st.button("Voltar ao início"):
