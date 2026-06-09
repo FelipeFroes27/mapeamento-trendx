@@ -71,9 +71,14 @@ def aplicar_layout():
             gap: .3cm !important;
         }
 
+        div[data-testid="stHorizontalBlock"] {
+            gap: .3cm !important;
+            margin-bottom: .3cm !important;
+        }
+
         div[data-testid="column"] {
-            padding-left: .15cm !important;
-            padding-right: .15cm !important;
+            padding-left: 0 !important;
+            padding-right: 0 !important;
         }
 
         .sidebar-logo {
@@ -262,6 +267,7 @@ def aplicar_layout():
             background: #ffffff;
             padding: 12px;
             min-height: 100%;
+            box-sizing: border-box;
         }
 
         .bar-row {
@@ -295,6 +301,11 @@ def aplicar_layout():
             border-radius: 999px;
         }
 
+        .color-bar-fill {
+            height: 100%;
+            border-radius: 999px;
+        }
+
         .bar-value {
             color: #000000;
             font-size: 12px;
@@ -325,6 +336,55 @@ def aplicar_layout():
             color: #000000;
             font-size: 12px;
             font-weight: 800;
+        }
+
+        .donut-wrap {
+            display: grid;
+            grid-template-columns: 158px 1fr;
+            gap: .3cm;
+            align-items: center;
+        }
+
+        .donut {
+            width: 148px;
+            height: 148px;
+            border-radius: 50%;
+            border: 2px solid #000000;
+            background: var(--donut-gradient);
+            position: relative;
+        }
+
+        .donut::after {
+            content: "";
+            position: absolute;
+            inset: 34px;
+            border-radius: 50%;
+            background: #ffffff;
+            border: 2px solid #000000;
+        }
+
+        .legend-row {
+            display: grid;
+            grid-template-columns: 13px minmax(0, 1fr) 48px;
+            gap: 8px;
+            align-items: center;
+            margin: 8px 0;
+            color: #000000;
+            font-size: 12px;
+            font-weight: 800;
+        }
+
+        .legend-swatch {
+            width: 13px;
+            height: 13px;
+            border: 1px solid #000000;
+            border-radius: 3px;
+        }
+
+        .legend-name {
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
         }
 
         .mini-table {

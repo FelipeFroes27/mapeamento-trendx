@@ -76,7 +76,7 @@ def enriquecer_posicao_com_bd(df_posicao, df_bd):
 
     colunas_auxiliares = [
         coluna
-        for coluna in ["Código", "Categoria", "Tipo", "Marca", "Grupo", "Subgrupo", "Referência"]
+        for coluna in ["Código", "Categoria", "Tipo", "Marca", "Grupo", "Subgrupo"]
         if coluna in df_bd.columns
     ]
 

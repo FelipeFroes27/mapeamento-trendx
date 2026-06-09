@@ -14,6 +14,9 @@ from utils.sheets import ler_aba
 from utils.ui import preparar_pagina, render_kpi
 
 
+CORES = ["#2563eb", "#16a34a", "#f59e0b", "#dc2626", "#7c3aed", "#0891b2", "#4b5563"]
+
+
 st.set_page_config(
     page_title="Indicadores | Mapeamento Trendx",
     layout="wide",
@@ -22,7 +25,7 @@ st.set_page_config(
 
 preparar_pagina(
     "Indicadores",
-    "Painel amplo para acompanhar ocupação, concentração de estoque e classificação auxiliar dos itens.",
+    "Painel amplo para acompanhar ocupação e composição do estoque.",
 )
 
 
@@ -41,81 +44,96 @@ def numero(valor):
         return "0"
 
 
-def ranking_por_coluna(df, coluna):
-    if coluna not in df.columns:
-        return pd.DataFrame(columns=[coluna, "Vagas", "Itens", "Quantidade"])
+def ranking_percentual(df, coluna, limite=6):
+    if df.empty or coluna not in df.columns:
+        return pd.DataFrame(columns=[coluna, "Quantidade", "Percentual"])
 
-    df = df.copy()
-    df[coluna] = df[coluna].fillna("").astype(str).str.strip().replace("", "Sem cadastro")
-
-    return (
-        df.groupby(coluna, dropna=False)
-        .agg(
-            Vagas=("Vaga", "nunique"),
-            Itens=("Código", "count"),
-            Quantidade=("Quantidade", "sum"),
-        )
+    ranking = (
+        df.assign(**{coluna: df[coluna].fillna("").astype(str).str.strip().replace("", "Sem cadastro")})
+        .groupby(coluna, dropna=False)
+        .agg(Quantidade=("Quantidade", "sum"))
         .reset_index()
         .sort_values("Quantidade", ascending=False)
     )
 
+    if len(ranking) > limite:
+        top = ranking.head(limite - 1).copy()
+        outros = pd.DataFrame(
+            [{coluna: "Outros", "Quantidade": ranking.iloc[limite - 1 :]["Quantidade"].sum()}]
+        )
+        ranking = pd.concat([top, outros], ignore_index=True)
 
-def render_barras(titulo, subtitulo, df, coluna_nome, coluna_valor="Quantidade", limite=8):
-    df = df.head(limite).copy()
-    maximo = max(float(df[coluna_valor].max()), 1) if not df.empty else 1
-    linhas = []
+    total = max(float(ranking["Quantidade"].sum()), 1)
+    ranking["Percentual"] = (ranking["Quantidade"] / total * 100).round(1)
+    return ranking
 
-    for _, linha in df.iterrows():
-        nome = escape(str(linha[coluna_nome]))
-        valor = int(linha[coluna_valor])
-        largura = max(int((valor / maximo) * 100), 2) if valor > 0 else 0
-        linhas.append(
-            f'<div class="bar-row">'
-            f'<div class="bar-name" title="{nome}">{nome}</div>'
-            f'<div class="bar-track"><div class="bar-fill" style="width:{largura}%;"></div></div>'
-            f'<div class="bar-value">{numero(valor)}</div>'
+
+def render_donut(titulo, subtitulo, ranking, coluna):
+    if ranking.empty:
+        st.markdown(
+            f'<div class="chart-panel"><div class="panel-title">{escape(titulo)}</div><div class="kpi-note">Sem dados.</div></div>',
+            unsafe_allow_html=True,
+        )
+        return
+
+    inicio = 0
+    segmentos = []
+    legenda = []
+
+    for indice, (_, linha) in enumerate(ranking.iterrows()):
+        percentual = float(linha["Percentual"])
+        fim = inicio + percentual
+        cor = CORES[indice % len(CORES)]
+        nome = escape(str(linha[coluna]))
+        segmentos.append(f"{cor} {inicio:.1f}% {fim:.1f}%")
+        legenda.append(
+            f'<div class="legend-row">'
+            f'<span class="legend-swatch" style="background:{cor};"></span>'
+            f'<span class="legend-name" title="{nome}">{nome}</span>'
+            f'<span>{percentual:.1f}%</span>'
             f'</div>'
         )
-
-    conteudo = "".join(linhas) if linhas else '<div class="kpi-note">Sem dados para exibir.</div>'
+        inicio = fim
 
     st.markdown(
         f'<div class="chart-panel">'
         f'<div class="panel-title">{escape(titulo)}</div>'
         f'<div class="panel-subtitle">{escape(subtitulo)}</div>'
-        f'{conteudo}'
+        f'<div class="donut-wrap">'
+        f'<div class="donut" style="--donut-gradient: conic-gradient({", ".join(segmentos)});"></div>'
+        f'<div>{"".join(legenda)}</div>'
+        f'</div>'
         f'</div>',
         unsafe_allow_html=True,
     )
 
 
-def render_tabela(titulo, df, colunas, limite=18):
+def render_barras_coloridas(titulo, subtitulo, ranking, coluna):
+    if ranking.empty:
+        st.markdown(
+            f'<div class="chart-panel"><div class="panel-title">{escape(titulo)}</div><div class="kpi-note">Sem dados.</div></div>',
+            unsafe_allow_html=True,
+        )
+        return
+
     linhas = []
-    df = df.head(limite).copy()
-
-    for _, linha in df.iterrows():
-        celulas = []
-        for coluna, alinhamento in colunas:
-            valor = linha.get(coluna, "")
-            classe = " class='num'" if alinhamento == "num" else ""
-            celulas.append(f"<td{classe}>{escape(numero(valor) if alinhamento == 'num' else str(valor))}</td>")
-        linhas.append("<tr>" + "".join(celulas) + "</tr>")
-
-    cabecalho = "".join(
-        f"<th{' class=\"num\"' if alinhamento == 'num' else ''}>{escape(coluna)}</th>"
-        for coluna, alinhamento in colunas
-    )
-    corpo = "".join(linhas) if linhas else f"<tr><td colspan='{len(colunas)}'>Sem dados.</td></tr>"
+    for indice, (_, linha) in enumerate(ranking.iterrows()):
+        cor = CORES[indice % len(CORES)]
+        nome = escape(str(linha[coluna]))
+        percentual = float(linha["Percentual"])
+        linhas.append(
+            f'<div class="bar-row">'
+            f'<div class="bar-name" title="{nome}">{nome}</div>'
+            f'<div class="bar-track"><div class="color-bar-fill" style="width:{max(percentual, 2)}%; background:{cor};"></div></div>'
+            f'<div class="bar-value">{percentual:.1f}%</div>'
+            f'</div>'
+        )
 
     st.markdown(
         f'<div class="chart-panel">'
         f'<div class="panel-title">{escape(titulo)}</div>'
-        f'<div class="table-scroll">'
-        f'<table class="mini-table">'
-        f'<thead><tr>{cabecalho}</tr></thead>'
-        f'<tbody>{corpo}</tbody>'
-        f'</table>'
-        f'</div>'
+        f'<div class="panel-subtitle">{escape(subtitulo)}</div>'
+        f'{"".join(linhas)}'
         f'</div>',
         unsafe_allow_html=True,
     )
@@ -129,7 +147,7 @@ if st.button("Atualizar dados"):
     st.cache_data.clear()
     st.rerun()
 
-k1, k2, k3, k4, k5 = st.columns(5)
+k1, k2, k3, k4, k5 = st.columns(5, gap="small")
 
 with k1:
     render_kpi("Vagas totais", resumo["total"], "Cadastradas em POSIÇÃO")
@@ -148,7 +166,7 @@ if df_posicao.empty:
 
 percentual_ocupado = int((resumo["ocupadas"] / resumo["total"]) * 100) if resumo["total"] else 0
 
-col_ocupacao, col_status, col_top_vagas = st.columns([1.05, 1.05, 1.4], gap="medium")
+col_ocupacao, col_categoria = st.columns([1, 1.45], gap="small")
 
 with col_ocupacao:
     st.markdown(
@@ -166,71 +184,46 @@ with col_ocupacao:
         unsafe_allow_html=True,
     )
 
-with col_status:
-    ranking_status = ranking_por_coluna(df_posicao, "Status")
-    render_barras("Status das vagas", "Linhas da aba POSIÇÃO por status.", ranking_status, "Status", "Itens", 5)
-
-with col_top_vagas:
-    if df_ocupado.empty:
-        st.markdown('<div class="chart-panel"><div class="panel-title">Top vagas</div><div class="kpi-note">Sem ocupação.</div></div>', unsafe_allow_html=True)
-    else:
-        ranking_vagas = (
-            df_ocupado.groupby("Vaga")
-            .agg(Itens=("Código", "count"), Quantidade=("Quantidade", "sum"))
-            .reset_index()
-            .sort_values("Quantidade", ascending=False)
-        )
-        render_barras("Top vagas por saldo", "Vagas com maior quantidade armazenada.", ranking_vagas, "Vaga", "Quantidade", 8)
-
-if df_ocupado.empty:
-    st.warning("Não há produtos ocupando vagas na aba POSIÇÃO.")
-    st.stop()
-
-ranking_categoria = ranking_por_coluna(df_ocupado, "Categoria")
-ranking_tipo = ranking_por_coluna(df_ocupado, "Tipo")
-ranking_marca = ranking_por_coluna(df_ocupado, "Marca")
-
-col_cat, col_tipo, col_marca = st.columns(3, gap="medium")
-
-with col_cat:
-    render_barras("Categorias", "Saldo em peças por categoria auxiliar.", ranking_categoria, "Categoria", "Quantidade", 8)
-
-with col_tipo:
-    render_barras("Tipos", "Saldo em peças por tipo auxiliar.", ranking_tipo, "Tipo", "Quantidade", 8)
-
-with col_marca:
-    render_barras("Marcas", "Saldo em peças por marca auxiliar.", ranking_marca, "Marca", "Quantidade", 8)
-
-top_produtos = (
-    df_ocupado.groupby(["Código", "Descrição"], dropna=False)
-    .agg(Vagas=("Vaga", "nunique"), Quantidade=("Quantidade", "sum"))
-    .reset_index()
-    .sort_values("Quantidade", ascending=False)
-)
-
-col_produtos, col_mapa = st.columns([1.05, 1.75], gap="medium")
-
-with col_produtos:
-    render_tabela(
-        "Top produtos",
-        top_produtos,
-        [("Código", "txt"), ("Descrição", "txt"), ("Vagas", "num"), ("Quantidade", "num")],
-        15,
+with col_categoria:
+    render_donut(
+        "Estoque por categoria",
+        "Participação percentual no saldo total.",
+        ranking_percentual(df_ocupado, "Categoria"),
+        "Categoria",
     )
 
-with col_mapa:
-    colunas_mapa = [
-        coluna
-        for coluna in [
-            "Vaga",
-            "Status",
-            "Código",
-            "Descrição",
-            "Quantidade",
-            "Categoria",
-            "Tipo",
-            "Marca",
-        ]
-        if coluna in df_posicao.columns
-    ]
-    render_tabela("Mapa operacional", df_posicao[colunas_mapa], [(coluna, "num" if coluna == "Quantidade" else "txt") for coluna in colunas_mapa], 26)
+col_marca, col_tipo = st.columns(2, gap="small")
+
+with col_marca:
+    render_donut(
+        "Estoque por marca",
+        "Participação percentual por marca.",
+        ranking_percentual(df_ocupado, "Marca"),
+        "Marca",
+    )
+
+with col_tipo:
+    render_donut(
+        "Estoque por tipo",
+        "Participação percentual por tipo.",
+        ranking_percentual(df_ocupado, "Tipo"),
+        "Tipo",
+    )
+
+col_barras_categoria, col_barras_marca = st.columns(2, gap="small")
+
+with col_barras_categoria:
+    render_barras_coloridas(
+        "Ranking de categorias",
+        "Distribuição percentual do saldo.",
+        ranking_percentual(df_ocupado, "Categoria", limite=8),
+        "Categoria",
+    )
+
+with col_barras_marca:
+    render_barras_coloridas(
+        "Ranking de marcas",
+        "Distribuição percentual do saldo.",
+        ranking_percentual(df_ocupado, "Marca", limite=8),
+        "Marca",
+    )
