@@ -345,6 +345,31 @@ def aplicar_layout():
             align-items: center;
         }
 
+        .metric-grid,
+        .dashboard-grid {
+            display: grid;
+            gap: .3cm;
+            margin-bottom: .3cm;
+        }
+
+        .metric-grid {
+            grid-template-columns: repeat(5, minmax(0, 1fr));
+        }
+
+        .dashboard-grid.two {
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+        }
+
+        .dashboard-grid.wide {
+            grid-template-columns: .9fr 1.4fr;
+        }
+
+        .metric-grid .kpi-card,
+        .dashboard-grid .chart-panel {
+            height: 100%;
+            margin-bottom: 0 !important;
+        }
+
         .donut {
             width: 148px;
             height: 148px;
@@ -512,6 +537,13 @@ def aplicar_layout():
             .home-hero {
                 grid-template-columns: 1fr;
                 flex-direction: column;
+            }
+
+            .metric-grid,
+            .dashboard-grid.two,
+            .dashboard-grid.wide,
+            .donut-wrap {
+                grid-template-columns: 1fr;
             }
 
         .home-title {

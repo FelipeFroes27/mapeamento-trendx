@@ -11,7 +11,7 @@ from utils.dados import (
     resumo_vagas,
 )
 from utils.sheets import ler_aba
-from utils.ui import preparar_pagina, render_kpi
+from utils.ui import preparar_pagina
 
 
 CORES = ["#2563eb", "#16a34a", "#f59e0b", "#dc2626", "#7c3aed", "#0891b2", "#4b5563"]
@@ -68,13 +68,19 @@ def ranking_percentual(df, coluna, limite=6):
     return ranking
 
 
-def render_donut(titulo, subtitulo, ranking, coluna):
+def kpi_html(rotulo, valor, nota):
+    return (
+        f'<div class="kpi-card">'
+        f'<div class="kpi-label">{escape(str(rotulo))}</div>'
+        f'<div class="kpi-value">{escape(numero(valor))}</div>'
+        f'<div class="kpi-note">{escape(str(nota))}</div>'
+        f'</div>'
+    )
+
+
+def donut_html(titulo, subtitulo, ranking, coluna):
     if ranking.empty:
-        st.markdown(
-            f'<div class="chart-panel"><div class="panel-title">{escape(titulo)}</div><div class="kpi-note">Sem dados.</div></div>',
-            unsafe_allow_html=True,
-        )
-        return
+        return f'<div class="chart-panel"><div class="panel-title">{escape(titulo)}</div><div class="kpi-note">Sem dados.</div></div>'
 
     inicio = 0
     segmentos = []
@@ -95,7 +101,7 @@ def render_donut(titulo, subtitulo, ranking, coluna):
         )
         inicio = fim
 
-    st.markdown(
+    return (
         f'<div class="chart-panel">'
         f'<div class="panel-title">{escape(titulo)}</div>'
         f'<div class="panel-subtitle">{escape(subtitulo)}</div>'
@@ -104,17 +110,12 @@ def render_donut(titulo, subtitulo, ranking, coluna):
         f'<div>{"".join(legenda)}</div>'
         f'</div>'
         f'</div>',
-        unsafe_allow_html=True,
     )
 
 
-def render_barras_coloridas(titulo, subtitulo, ranking, coluna):
+def barras_coloridas_html(titulo, subtitulo, ranking, coluna):
     if ranking.empty:
-        st.markdown(
-            f'<div class="chart-panel"><div class="panel-title">{escape(titulo)}</div><div class="kpi-note">Sem dados.</div></div>',
-            unsafe_allow_html=True,
-        )
-        return
+        return f'<div class="chart-panel"><div class="panel-title">{escape(titulo)}</div><div class="kpi-note">Sem dados.</div></div>'
 
     linhas = []
     for indice, (_, linha) in enumerate(ranking.iterrows()):
@@ -129,13 +130,12 @@ def render_barras_coloridas(titulo, subtitulo, ranking, coluna):
             f'</div>'
         )
 
-    st.markdown(
+    return (
         f'<div class="chart-panel">'
         f'<div class="panel-title">{escape(titulo)}</div>'
         f'<div class="panel-subtitle">{escape(subtitulo)}</div>'
         f'{"".join(linhas)}'
-        f'</div>',
-        unsafe_allow_html=True,
+        f'</div>'
     )
 
 
@@ -147,18 +147,16 @@ if st.button("Atualizar dados"):
     st.cache_data.clear()
     st.rerun()
 
-k1, k2, k3, k4, k5 = st.columns(5, gap="small")
-
-with k1:
-    render_kpi("Vagas totais", resumo["total"], "Cadastradas em POSIÇÃO")
-with k2:
-    render_kpi("Ocupadas", resumo["ocupadas"], "Com produto e saldo")
-with k3:
-    render_kpi("Disponíveis", resumo["disponiveis"], "Sem produto em saldo")
-with k4:
-    render_kpi("Itens alocados", resumo["itens"], "Linhas ocupadas")
-with k5:
-    render_kpi("Saldo em peças", resumo["quantidade"], "Quantidade total")
+st.markdown(
+    '<div class="metric-grid">'
+    + kpi_html("Vagas totais", resumo["total"], "Cadastradas em POSIÇÃO")
+    + kpi_html("Ocupadas", resumo["ocupadas"], "Com produto e saldo")
+    + kpi_html("Disponíveis", resumo["disponiveis"], "Sem produto em saldo")
+    + kpi_html("Itens alocados", resumo["itens"], "Linhas ocupadas")
+    + kpi_html("Saldo em peças", resumo["quantidade"], "Quantidade total")
+    + '</div>',
+    unsafe_allow_html=True,
+)
 
 if df_posicao.empty:
     st.warning("Não há dados na aba POSIÇÃO.")
@@ -166,64 +164,65 @@ if df_posicao.empty:
 
 percentual_ocupado = int((resumo["ocupadas"] / resumo["total"]) * 100) if resumo["total"] else 0
 
-col_ocupacao, col_categoria = st.columns([1, 1.45], gap="small")
+ocupacao_html = (
+    f'<div class="chart-panel">'
+    f'<div class="panel-title">Ocupação geral</div>'
+    f'<div class="panel-subtitle">Percentual de vagas ocupadas no mapa.</div>'
+    f'<div class="split-bar" style="--ocupado:{percentual_ocupado}%;">'
+    f'<div class="occupied"></div><div></div>'
+    f'</div>'
+    f'<div class="split-labels">'
+    f'<span>{percentual_ocupado}% ocupado</span>'
+    f'<span>{100 - percentual_ocupado}% disponível</span>'
+    f'</div>'
+    f'</div>'
+)
 
-with col_ocupacao:
-    st.markdown(
-        f'<div class="chart-panel">'
-        f'<div class="panel-title">Ocupação geral</div>'
-        f'<div class="panel-subtitle">Percentual de vagas ocupadas no mapa.</div>'
-        f'<div class="split-bar" style="--ocupado:{percentual_ocupado}%;">'
-        f'<div class="occupied"></div><div></div>'
-        f'</div>'
-        f'<div class="split-labels">'
-        f'<span>{percentual_ocupado}% ocupado</span>'
-        f'<span>{100 - percentual_ocupado}% disponível</span>'
-        f'</div>'
-        f'</div>',
-        unsafe_allow_html=True,
-    )
-
-with col_categoria:
-    render_donut(
+st.markdown(
+    '<div class="dashboard-grid wide">'
+    + ocupacao_html
+    + donut_html(
         "Estoque por categoria",
         "Participação percentual no saldo total.",
         ranking_percentual(df_ocupado, "Categoria"),
         "Categoria",
     )
+    + '</div>',
+    unsafe_allow_html=True,
+)
 
-col_marca, col_tipo = st.columns(2, gap="small")
-
-with col_marca:
-    render_donut(
+st.markdown(
+    '<div class="dashboard-grid two">'
+    + donut_html(
         "Estoque por marca",
         "Participação percentual por marca.",
         ranking_percentual(df_ocupado, "Marca"),
         "Marca",
     )
-
-with col_tipo:
-    render_donut(
+    + donut_html(
         "Estoque por tipo",
         "Participação percentual por tipo.",
         ranking_percentual(df_ocupado, "Tipo"),
         "Tipo",
     )
+    + '</div>',
+    unsafe_allow_html=True,
+)
 
-col_barras_categoria, col_barras_marca = st.columns(2, gap="small")
-
-with col_barras_categoria:
-    render_barras_coloridas(
+st.markdown(
+    '<div class="dashboard-grid two">'
+    + barras_coloridas_html(
         "Ranking de categorias",
         "Distribuição percentual do saldo.",
         ranking_percentual(df_ocupado, "Categoria", limite=8),
         "Categoria",
     )
-
-with col_barras_marca:
-    render_barras_coloridas(
+    + barras_coloridas_html(
         "Ranking de marcas",
         "Distribuição percentual do saldo.",
         ranking_percentual(df_ocupado, "Marca", limite=8),
         "Marca",
     )
+    + '</div>',
+    unsafe_allow_html=True,
+)

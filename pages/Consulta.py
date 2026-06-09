@@ -108,34 +108,63 @@ vagas = []
 if "Vaga" in df_posicao.columns:
     vagas = sorted(vaga for vaga in df_posicao["Vaga"].dropna().astype(str).str.strip().unique() if vaga)
 
+codigos = []
+if "Código" in df_posicao.columns:
+    codigos = sorted(codigo for codigo in df_posicao["Código"].dropna().astype(str).str.strip().unique() if codigo)
+
+descricoes = []
+if "Descrição" in df_posicao.columns:
+    descricoes = sorted(descricao for descricao in df_posicao["Descrição"].dropna().astype(str).str.strip().unique() if descricao)
+
+referencias = []
+if "Referência" in df_posicao.columns:
+    referencias = sorted(referencia for referencia in df_posicao["Referência"].dropna().astype(str).str.strip().unique() if referencia)
+
 vaga_opcao = st.selectbox(
     "Vaga",
     [""] + vagas,
     format_func=lambda valor: "Todas" if valor == "" else valor,
 )
 
-codigo = st.text_input("Código").strip()
-descricao = st.text_input("Descrição").strip()
-referencia = st.text_input("Referência").strip()
+codigo_opcao = st.selectbox(
+    "Código",
+    [""] + codigos,
+    format_func=lambda valor: "Todos" if valor == "" else valor,
+)
+
+descricao_opcao = st.selectbox(
+    "Descrição",
+    [""] + descricoes,
+    format_func=lambda valor: "Todas" if valor == "" else valor,
+)
+
+referencia_opcao = st.selectbox(
+    "Referência",
+    [""] + referencias,
+    format_func=lambda valor: "Todas" if valor == "" else valor,
+)
 
 if st.button("Atualizar", use_container_width=True):
     st.cache_data.clear()
     st.rerun()
 
 vaga = texto(vaga_opcao).upper()
+codigo = texto(codigo_opcao)
+descricao = texto(descricao_opcao)
+referencia = texto(referencia_opcao)
 df_resultado = df_posicao.copy()
 
 if vaga and "Vaga" in df_resultado.columns:
     df_resultado = df_resultado[df_resultado["Vaga"].fillna("").astype(str).str.upper() == vaga]
 
 if codigo and "Código" in df_resultado.columns:
-    df_resultado = df_resultado[contem(df_resultado["Código"], codigo)]
+    df_resultado = df_resultado[df_resultado["Código"].fillna("").astype(str).str.strip() == codigo]
 
 if descricao and "Descrição" in df_resultado.columns:
-    df_resultado = df_resultado[contem(df_resultado["Descrição"], descricao)]
+    df_resultado = df_resultado[df_resultado["Descrição"].fillna("").astype(str).str.strip() == descricao]
 
 if referencia and "Referência" in df_resultado.columns:
-    df_resultado = df_resultado[contem(df_resultado["Referência"], referencia)]
+    df_resultado = df_resultado[df_resultado["Referência"].fillna("").astype(str).str.strip() == referencia]
 
 tem_filtro = any([vaga, codigo, descricao, referencia])
 
@@ -159,12 +188,12 @@ if vaga and "Vaga" in df_hist_filtrado.columns:
     df_hist_filtrado = df_hist_filtrado[df_hist_filtrado["Vaga"].fillna("").astype(str).str.upper() == vaga]
 
 if codigo and "Código" in df_hist_filtrado.columns:
-    df_hist_filtrado = df_hist_filtrado[contem(df_hist_filtrado["Código"], codigo)]
+    df_hist_filtrado = df_hist_filtrado[df_hist_filtrado["Código"].fillna("").astype(str).str.strip() == codigo]
 elif codigos_encontrados and "Código" in df_hist_filtrado.columns:
     df_hist_filtrado = df_hist_filtrado[df_hist_filtrado["Código"].fillna("").astype(str).isin(codigos_encontrados)]
 
 if descricao and "Descrição" in df_hist_filtrado.columns:
-    df_hist_filtrado = df_hist_filtrado[contem(df_hist_filtrado["Descrição"], descricao)]
+    df_hist_filtrado = df_hist_filtrado[df_hist_filtrado["Descrição"].fillna("").astype(str).str.strip() == descricao]
 
 if "_DataOrdenacao" in df_hist_filtrado.columns:
     df_hist_filtrado = df_hist_filtrado.sort_values("_DataOrdenacao", ascending=False)
