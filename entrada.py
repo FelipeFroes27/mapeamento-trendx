@@ -438,6 +438,35 @@ if confirmar:
 
     else:
 
+        assinatura_entrada = (
+            vaga,
+            codigo,
+            int(quantidade),
+            usuario,
+            referencia,
+            observacoes
+        )
+
+        ultima_assinatura = st.session_state.get(
+            "ultima_entrada_assinatura"
+        )
+
+        ultimo_horario = st.session_state.get(
+            "ultima_entrada_horario"
+        )
+
+        agora = datetime.now()
+
+        if (
+            assinatura_entrada == ultima_assinatura
+            and ultimo_horario is not None
+            and (agora - ultimo_horario).total_seconds() < 10
+        ):
+
+            erro_entrada(
+                "Esta entrada já foi registrada há poucos segundos. Atualize a tela antes de tentar novamente."
+            )
+
         dados_posicao_atual = ler_aba_atual(
             "Mapeamento Trendx",
             "POSIÇÃO"
@@ -782,6 +811,11 @@ if confirmar:
             )
 
 
+        st.session_state.ultima_entrada_assinatura = assinatura_entrada
+
+        st.session_state.ultima_entrada_horario = datetime.now()
+
+
         # ====================================
         # LIMPA CACHE
         # ====================================
@@ -802,5 +836,7 @@ if confirmar:
         # ====================================
         # VOLTA INICIO
         # ====================================
+
+        st.session_state.entrada_processando = False
 
         st.switch_page("app.py")

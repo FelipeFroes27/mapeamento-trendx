@@ -340,6 +340,33 @@ if confirmar:
             linha_produto["Código"]
         ).strip()
 
+        assinatura_saida = (
+            vaga,
+            codigo_selecionado,
+            int(quantidade_saida),
+            usuario
+        )
+
+        ultima_assinatura = st.session_state.get(
+            "ultima_saida_assinatura"
+        )
+
+        ultimo_horario = st.session_state.get(
+            "ultima_saida_horario"
+        )
+
+        agora = datetime.now()
+
+        if (
+            assinatura_saida == ultima_assinatura
+            and ultimo_horario is not None
+            and (agora - ultimo_horario).total_seconds() < 10
+        ):
+
+            erro_saida(
+                "Esta saída já foi registrada há poucos segundos. Atualize a tela antes de tentar novamente."
+            )
+
         dados_posicao_atual = ler_aba_atual(
             "Mapeamento Trendx",
             "POSIÇÃO"
@@ -551,6 +578,11 @@ if confirmar:
             )
 
 
+            st.session_state.ultima_saida_assinatura = assinatura_saida
+
+            st.session_state.ultima_saida_horario = datetime.now()
+
+
             # ====================================
             # LIMPA CACHE
             # ====================================
@@ -571,5 +603,7 @@ if confirmar:
             # ====================================
             # VOLTA INICIO
             # ====================================
+
+            st.session_state.saida_processando = False
 
             st.switch_page("app.py")

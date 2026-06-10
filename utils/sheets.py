@@ -40,6 +40,10 @@ def ler_aba(nome_planilha, nome_aba):
 
     dados = aba.get_all_values()
 
+    if not dados:
+
+        return []
+
     cabecalho = dados[0]
 
     linhas = dados[1:]
@@ -74,6 +78,10 @@ def ler_aba_atual(nome_planilha, nome_aba):
 
     dados = aba.get_all_values()
 
+    if not dados:
+
+        return []
+
     cabecalho = dados[0]
 
     linhas = dados[1:]
@@ -82,8 +90,13 @@ def ler_aba_atual(nome_planilha, nome_aba):
 
     for indice, linha in enumerate(linhas, start=2):
 
+        linha_completa = (
+            linha
+            + [""] * max(len(cabecalho) - len(linha), 0)
+        )
+
         registro = dict(
-            zip(cabecalho, linha)
+            zip(cabecalho, linha_completa)
         )
 
         registro["_linha_planilha"] = indice

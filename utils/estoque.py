@@ -13,7 +13,7 @@ def buscar_vaga(vaga, dados_posicao):
     for linha in dados_posicao:
 
         vaga_planilha = str(
-            linha["Vaga"]
+            linha.get("Vaga", "")
         ).strip().upper()
 
         if vaga_planilha == vaga:
@@ -44,7 +44,7 @@ def buscar_produto(codigo, dados_bd):
     for produto in dados_bd:
 
         codigo_bd = str(
-            produto["Código"]
+            produto.get("Código", "")
         ).strip()
 
         if codigo_bd == codigo:
@@ -54,7 +54,7 @@ def buscar_produto(codigo, dados_bd):
                 "produto_encontrado": True,
 
                 "descricao": str(
-                    produto["Descrição"]
+                    produto.get("Descrição", "")
                 ).strip()
 
             }
@@ -122,7 +122,7 @@ def buscar_produto_vaga(
     for linha in resultados_vaga:
 
         codigo_existente = str(
-            linha["Código"]
+            linha.get("Código", "")
         ).strip()
 
         if codigo_existente == codigo:
@@ -133,8 +133,8 @@ def buscar_produto_vaga(
 
                 "linha": linha,
 
-                "quantidade": int(
-                    linha["Quantidade"]
+                "quantidade": quantidade_int(
+                    linha.get("Quantidade", "")
                 )
 
             }
@@ -206,7 +206,7 @@ def ultimo_produto_vaga(
     for linha in resultados_vaga:
 
         codigo = str(
-            linha["Código"]
+            linha.get("Código", "")
         ).strip()
 
         if codigo != "":
