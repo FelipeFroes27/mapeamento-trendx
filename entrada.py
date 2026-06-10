@@ -66,7 +66,7 @@ def selectbox_digitavel(label, opcoes, key):
 
     try:
 
-        return st.selectbox(
+        valor = st.selectbox(
             label,
             [""] + opcoes,
             format_func=lambda valor: "Digite ou selecione..." if valor == "" else valor,
@@ -74,12 +74,16 @@ def selectbox_digitavel(label, opcoes, key):
             key=key
         )
 
+        return str(
+            valor
+        ).strip().upper()
+
     except TypeError:
 
         return st.text_input(
             label,
             key=key
-        )
+        ).strip().upper()
 
 
 def render_itens_vaga(itens):
@@ -184,7 +188,7 @@ codigo = str(
         codigos_produtos,
         "entrada_codigo"
     )
-).strip()
+).strip().upper()
 
 
 resultado_produto = buscar_produto(
@@ -230,7 +234,7 @@ elif codigo:
 
     descricao = st.text_input(
         "Digite a descrição manualmente"
-    ).strip()
+    ).strip().upper()
 
 
 # ====================================
@@ -254,7 +258,7 @@ quantidade = st.number_input(
 
 usuario = st.text_input(
     "Usuário"
-).strip()
+).strip().upper()
 
 
 # ====================================
@@ -263,7 +267,7 @@ usuario = st.text_input(
 
 referencia = st.text_input(
     "Referência"
-).strip()
+).strip().upper()
 
 
 # ====================================
@@ -272,7 +276,7 @@ referencia = st.text_input(
 
 observacoes = st.text_area(
     "Observações"
-).strip()
+).strip().upper()
 
 
 # ====================================
@@ -560,7 +564,7 @@ if confirmar:
 
                 codigo_existente_atual = str(
                     linha["Código"]
-                ).strip()
+                ).strip().upper()
 
                 if (
                     codigo_existente_atual
@@ -578,7 +582,7 @@ if confirmar:
 
                 codigo_existente = str(
                     linha["Código"]
-                ).strip()
+                ).strip().upper()
 
                 if codigo_existente == codigo:
 
@@ -680,7 +684,7 @@ if confirmar:
 
                         codigo_existente = str(
                             linha["Código"]
-                        ).strip()
+                        ).strip().upper()
 
                         if codigo_existente == codigo_substituir:
 

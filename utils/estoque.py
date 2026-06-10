@@ -39,13 +39,13 @@ def buscar_produto(codigo, dados_bd):
 
     codigo = str(
         codigo
-    ).strip()
+    ).strip().upper()
 
     for produto in dados_bd:
 
         codigo_bd = str(
             produto.get("Código", "")
-        ).strip()
+        ).strip().upper()
 
         if codigo_bd == codigo:
 
@@ -80,7 +80,7 @@ def listar_valores_unicos(dados, coluna):
 
         valor = str(
             linha.get(coluna, "")
-        ).strip()
+        ).strip().upper()
 
         if valor and valor not in valores:
 

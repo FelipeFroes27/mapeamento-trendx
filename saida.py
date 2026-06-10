@@ -59,7 +59,7 @@ def selectbox_digitavel(label, opcoes, key):
 
     try:
 
-        return st.selectbox(
+        valor = st.selectbox(
             label,
             [""] + opcoes,
             format_func=lambda valor: "Digite ou selecione..." if valor == "" else valor,
@@ -67,12 +67,16 @@ def selectbox_digitavel(label, opcoes, key):
             key=key
         )
 
+        return str(
+            valor
+        ).strip().upper()
+
     except TypeError:
 
         return st.text_input(
             label,
             key=key
-        )
+        ).strip().upper()
 
 
 # ====================================
@@ -259,7 +263,7 @@ quantidade_saida = st.number_input(
 
 usuario = st.text_input(
     "Usuário"
-).strip()
+).strip().upper()
 
 
 # ====================================
@@ -338,7 +342,7 @@ if confirmar:
 
         codigo_selecionado = str(
             linha_produto["Código"]
-        ).strip()
+        ).strip().upper()
 
         assinatura_saida = (
             vaga,
@@ -387,7 +391,7 @@ if confirmar:
 
             codigo_atual = str(
                 linha["Código"]
-            ).strip()
+            ).strip().upper()
 
             status_atual = str(
                 linha["Status"]
@@ -447,7 +451,7 @@ if confirmar:
 
             codigo = str(
                 linha_produto_atual["Código"]
-            ).strip()
+            ).strip().upper()
 
             descricao = str(
                 linha_produto_atual["Descrição"]
