@@ -339,9 +339,38 @@ if vaga_existe and resultados_vaga and codigo:
 # BOTÃO
 # ====================================
 
-confirmar = st.button(
-    "CONFIRMAR ENTRADA"
+if "entrada_processando" not in st.session_state:
+
+    st.session_state.entrada_processando = False
+
+
+def marcar_entrada_processando():
+
+    st.session_state.entrada_processando = True
+
+
+def erro_entrada(mensagem):
+
+    st.session_state.entrada_processando = False
+
+    st.error(
+        mensagem
+    )
+
+    st.stop()
+
+
+st.button(
+
+    "CONFIRMAR ENTRADA",
+
+    disabled=st.session_state.entrada_processando,
+
+    on_click=marcar_entrada_processando
+
 )
+
+confirmar = st.session_state.entrada_processando
 
 
 # ====================================
@@ -356,31 +385,31 @@ if confirmar:
 
     if not vaga:
 
-        st.error(
+        erro_entrada(
             "Digite a vaga"
         )
 
     elif not usuario:
 
-        st.error(
+        erro_entrada(
             "Digite o usuário"
         )
 
     elif vaga_existe and not codigo:
 
-        st.error(
+        erro_entrada(
             "Digite o código"
         )
 
     elif vaga_existe and not descricao:
 
-        st.error(
+        erro_entrada(
             "Descrição inválida"
         )
 
     elif codigo and not descricao:
 
-        st.error(
+        erro_entrada(
             "Descrição inválida"
         )
 
@@ -411,11 +440,9 @@ if confirmar:
 
         if vaga_existe_atual and not codigo:
 
-            st.error(
+            erro_entrada(
                 "A vaga já existe. Para cadastrar apenas uma vaga vazia, informe uma vaga nova."
             )
-
-            st.stop()
 
         data_atual = datetime.now().strftime(
             "%d/%m/%Y %H:%M:%S"
@@ -559,11 +586,9 @@ if confirmar:
                     and modo_operacao is None
                 ):
 
-                    st.error(
+                    erro_entrada(
                         "A vaga mudou enquanto você operava. Atualize a tela e confirme novamente."
                     )
-
-                    st.stop()
 
 
                 # ====================================

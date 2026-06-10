@@ -259,9 +259,38 @@ usuario = st.text_input(
 # BOTÃO
 # ====================================
 
-confirmar = st.button(
-    "CONFIRMAR SAÍDA"
+if "saida_processando" not in st.session_state:
+
+    st.session_state.saida_processando = False
+
+
+def marcar_saida_processando():
+
+    st.session_state.saida_processando = True
+
+
+def erro_saida(mensagem):
+
+    st.session_state.saida_processando = False
+
+    st.error(
+        mensagem
+    )
+
+    st.stop()
+
+
+st.button(
+
+    "CONFIRMAR SAÍDA",
+
+    disabled=st.session_state.saida_processando,
+
+    on_click=marcar_saida_processando
+
 )
+
+confirmar = st.session_state.saida_processando
 
 
 # ====================================
@@ -276,25 +305,25 @@ if confirmar:
 
     if not vaga:
 
-        st.error(
+        erro_saida(
             "Digite a vaga"
         )
 
     elif not vaga_existe:
 
-        st.error(
+        erro_saida(
             "Vaga não encontrada"
         )
 
     elif not linha_produto:
 
-        st.error(
+        erro_saida(
             "Selecione um produto"
         )
 
     elif not usuario:
 
-        st.error(
+        erro_saida(
             "Digite o usuário"
         )
 
@@ -341,11 +370,9 @@ if confirmar:
 
         if linha_produto_atual is None:
 
-            st.error(
+            erro_saida(
                 "A vaga mudou enquanto você operava. Atualize a tela e confirme novamente."
             )
-
-            st.stop()
 
         quantidade_atual = quantidade_int(
             linha_produto_atual["Quantidade"]
@@ -360,7 +387,7 @@ if confirmar:
 
         if not validacao["valido"]:
 
-            st.error(
+            erro_saida(
                 validacao["mensagem"]
             )
 
