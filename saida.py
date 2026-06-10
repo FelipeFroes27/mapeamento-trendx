@@ -34,6 +34,7 @@ preparar_pagina(
     "Saída de Material",
     "Retire produtos, atualize saldos e libere vagas disponíveis.",
     mobile=True,
+    pagina="saida",
 )
 
 if st.button("Voltar ao início"):

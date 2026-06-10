@@ -13,6 +13,7 @@ preparar_pagina(
     "Mapeamento Trendx",
     "Controle de vagas, produtos, entradas, saídas e disponibilidade logística.",
     mobile=True,
+    pagina="inicio",
 )
 
 st.markdown(

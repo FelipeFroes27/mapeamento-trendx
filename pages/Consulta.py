@@ -24,6 +24,7 @@ preparar_pagina(
     "Consulta",
     "Busque por vaga, código, descrição ou referência para ver posições e histórico.",
     mobile=True,
+    pagina="consulta",
 )
 
 

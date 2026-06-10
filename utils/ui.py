@@ -6,6 +6,26 @@ import streamlit as st
 
 LOGO_BRANCO = "Logo Branco.bmp"
 LOGO_PRETO = "logo preto goper.png"
+CACHE_KEYS_DADOS = [
+    "dados_posicao",
+    "dados_bd",
+    "consulta_resultado",
+    "consulta_total_resultados",
+]
+
+
+def atualizar_cache_ao_navegar(pagina):
+    pagina_anterior = st.session_state.get("_pagina_atual_cache")
+
+    if pagina_anterior == pagina:
+        return
+
+    st.cache_data.clear()
+
+    for chave in CACHE_KEYS_DADOS:
+        st.session_state.pop(chave, None)
+
+    st.session_state["_pagina_atual_cache"] = pagina
 
 
 def aplicar_layout():
@@ -913,7 +933,11 @@ def render_cabecalho(titulo, subtitulo=""):
     )
 
 
-def preparar_pagina(titulo, subtitulo="", mobile=False):
+def preparar_pagina(titulo, subtitulo="", mobile=False, pagina=None):
+    atualizar_cache_ao_navegar(
+        pagina or titulo
+    )
+
     aplicar_layout()
     if mobile:
         aplicar_layout_mobile()

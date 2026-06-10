@@ -26,6 +26,7 @@ st.set_page_config(
 preparar_pagina(
     "Indicadores",
     "Painel amplo para acompanhar ocupação e composição do estoque.",
+    pagina="indicadores",
 )
 
 

@@ -31,6 +31,7 @@ preparar_pagina(
     "Entrada de Material",
     "Cadastre vagas, inclua produtos e atualize saldos nas posições.",
     mobile=True,
+    pagina="entrada",
 )
 
 if st.button("Voltar ao início"):
