@@ -250,6 +250,23 @@ def aplicar_layout():
             font-weight: 800 !important;
         }
 
+        input:disabled,
+        textarea:disabled,
+        [disabled],
+        div[data-baseweb="input"] input:disabled {
+            background: #ffffff !important;
+            color: #000000 !important;
+            -webkit-text-fill-color: #000000 !important;
+            opacity: 1 !important;
+        }
+
+        div[data-baseweb="input"]:has(input:disabled),
+        div[data-baseweb="textarea"]:has(textarea:disabled) {
+            background: #ffffff !important;
+            color: #000000 !important;
+            opacity: 1 !important;
+        }
+
         [data-testid="stAlert"] {
             border: 2px solid #000000 !important;
             border-radius: 10px !important;
