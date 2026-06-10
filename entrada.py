@@ -371,6 +371,10 @@ if "entrada_processando" not in st.session_state:
 
     st.session_state.entrada_processando = False
 
+if "entrada_revisando" not in st.session_state:
+
+    st.session_state.entrada_revisando = False
+
 
 def marcar_entrada_processando():
 
@@ -381,6 +385,8 @@ def erro_entrada(mensagem):
 
     st.session_state.entrada_processando = False
 
+    st.session_state.entrada_revisando = False
+
     st.error(
         mensagem
     )
@@ -388,15 +394,86 @@ def erro_entrada(mensagem):
     st.stop()
 
 
-st.button(
+def render_revisao_entrada():
 
-    "CONFIRMAR ENTRADA",
+    if vaga_existe and produto_igual:
 
-    disabled=st.session_state.entrada_processando,
+        operacao = "Produto será somado na vaga existente"
 
-    on_click=marcar_entrada_processando
+    elif vaga_existe and possui_outro_produto:
 
-)
+        operacao = f"Produto diferente: {modo_operacao or 'definir operação'}"
+
+    elif vaga_existe:
+
+        operacao = "Produto será incluído na vaga disponível"
+
+    elif codigo:
+
+        operacao = "Vaga nova será cadastrada com produto"
+
+    else:
+
+        operacao = "Vaga nova será cadastrada como disponível"
+
+    st.markdown(
+        f'<div class="mobile-card">'
+        f'<div class="mobile-card-title">Revisar Entrada</div>'
+        f'<div class="mobile-card-subtitle">Confira antes de gravar a movimentação.</div>'
+        f'<div class="mobile-card-meta">'
+        f'<span class="mobile-pill">Vaga: {escape(vaga)}</span>'
+        f'<span class="mobile-pill">Código: {escape(codigo or "-")}</span>'
+        f'<span class="mobile-pill">Qtd: {int(quantidade)}</span>'
+        f'<span class="mobile-pill">Usuário: {escape(usuario or "-")}</span>'
+        f'<span class="mobile-pill">Referência: {escape(referencia or "-")}</span>'
+        f'<span class="mobile-pill">{escape(operacao)}</span>'
+        f'</div>'
+        f'</div>',
+        unsafe_allow_html=True
+    )
+
+
+if not st.session_state.entrada_revisando:
+
+    if st.button(
+        "REVISAR ENTRADA",
+        disabled=st.session_state.entrada_processando
+    ):
+
+        st.session_state.entrada_revisando = True
+
+        st.rerun()
+
+else:
+
+    render_revisao_entrada()
+
+    col_editar, col_confirmar = st.columns(2)
+
+    with col_editar:
+
+        if st.button(
+            "EDITAR",
+            use_container_width=True
+        ):
+
+            st.session_state.entrada_revisando = False
+
+            st.rerun()
+
+    with col_confirmar:
+
+        st.button(
+
+            "CONFIRMAR ENTRADA",
+
+            disabled=st.session_state.entrada_processando,
+
+            on_click=marcar_entrada_processando,
+
+            use_container_width=True
+
+        )
 
 confirmar = st.session_state.entrada_processando
 
@@ -843,5 +920,7 @@ if confirmar:
         # ====================================
 
         st.session_state.entrada_processando = False
+
+        st.session_state.entrada_revisando = False
 
         st.switch_page("app.py")

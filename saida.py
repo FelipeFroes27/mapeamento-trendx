@@ -275,6 +275,10 @@ if "saida_processando" not in st.session_state:
 
     st.session_state.saida_processando = False
 
+if "saida_revisando" not in st.session_state:
+
+    st.session_state.saida_revisando = False
+
 
 def marcar_saida_processando():
 
@@ -285,6 +289,8 @@ def erro_saida(mensagem):
 
     st.session_state.saida_processando = False
 
+    st.session_state.saida_revisando = False
+
     st.error(
         mensagem
     )
@@ -292,15 +298,92 @@ def erro_saida(mensagem):
     st.stop()
 
 
-st.button(
+def render_revisao_saida():
 
-    "CONFIRMAR SAÍDA",
+    saldo_final_previsto = max(
+        quantidade_atual - int(quantidade_saida),
+        0
+    )
 
-    disabled=st.session_state.saida_processando,
+    operacao = (
+        "Saída total: vaga será liberada"
+        if saldo_final_previsto == 0
+        else "Saída parcial: saldo será atualizado"
+    )
 
-    on_click=marcar_saida_processando
+    codigo_revisao = ""
 
-)
+    descricao_revisao = ""
+
+    if linha_produto:
+
+        codigo_revisao = str(
+            linha_produto.get("Código", "")
+        ).strip()
+
+        descricao_revisao = str(
+            linha_produto.get("Descrição", "")
+        ).strip()
+
+    st.markdown(
+        f'<div class="mobile-card">'
+        f'<div class="mobile-card-title">Revisar Saída</div>'
+        f'<div class="mobile-card-subtitle">{escape(descricao_revisao)}</div>'
+        f'<div class="mobile-card-meta">'
+        f'<span class="mobile-pill">Vaga: {escape(vaga)}</span>'
+        f'<span class="mobile-pill">Código: {escape(codigo_revisao or "-")}</span>'
+        f'<span class="mobile-pill">Atual: {quantidade_atual}</span>'
+        f'<span class="mobile-pill">Retirar: {int(quantidade_saida)}</span>'
+        f'<span class="mobile-pill">Saldo final: {saldo_final_previsto}</span>'
+        f'<span class="mobile-pill">Usuário: {escape(usuario or "-")}</span>'
+        f'<span class="mobile-pill">{escape(operacao)}</span>'
+        f'</div>'
+        f'</div>',
+        unsafe_allow_html=True
+    )
+
+
+if not st.session_state.saida_revisando:
+
+    if st.button(
+        "REVISAR SAÍDA",
+        disabled=st.session_state.saida_processando
+    ):
+
+        st.session_state.saida_revisando = True
+
+        st.rerun()
+
+else:
+
+    render_revisao_saida()
+
+    col_editar, col_confirmar = st.columns(2)
+
+    with col_editar:
+
+        if st.button(
+            "EDITAR",
+            use_container_width=True
+        ):
+
+            st.session_state.saida_revisando = False
+
+            st.rerun()
+
+    with col_confirmar:
+
+        st.button(
+
+            "CONFIRMAR SAÍDA",
+
+            disabled=st.session_state.saida_processando,
+
+            on_click=marcar_saida_processando,
+
+            use_container_width=True
+
+        )
 
 confirmar = st.session_state.saida_processando
 
@@ -610,5 +693,7 @@ if confirmar:
             # ====================================
 
             st.session_state.saida_processando = False
+
+            st.session_state.saida_revisando = False
 
             st.switch_page("app.py")
