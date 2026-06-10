@@ -1,5 +1,6 @@
 import streamlit as st
 import pandas as pd
+from html import escape
 from datetime import datetime
 
 from utils.sheets import (
@@ -81,6 +82,44 @@ def selectbox_digitavel(label, opcoes, key):
         )
 
 
+def render_itens_vaga(itens):
+
+    linhas = []
+
+    for linha in itens:
+
+        codigo_item = str(
+            linha.get("Código", "")
+        ).strip()
+
+        descricao_item = str(
+            linha.get("Descrição", "")
+        ).strip()
+
+        quantidade_item = str(
+            linha.get("Quantidade", "")
+        ).strip()
+
+        if not codigo_item and not descricao_item:
+
+            continue
+
+        linhas.append(
+            f'<div class="mobile-card">'
+            f'<div class="mobile-card-title">{escape(codigo_item)} | Qtd: {escape(quantidade_item)}</div>'
+            f'<div class="mobile-card-subtitle">{escape(descricao_item)}</div>'
+            f'</div>'
+        )
+
+    if linhas:
+
+        st.markdown(
+            '<div class="panel-title">Itens na vaga</div>'
+            + ''.join(linhas),
+            unsafe_allow_html=True
+        )
+
+
 # ====================================
 # VAGA
 # ====================================
@@ -119,20 +158,8 @@ resultados_vaga = resultado_vaga[
 
 if vaga_existe:
 
-    tabela_vaga = []
-
-    for linha in resultados_vaga:
-
-        tabela_vaga.append({
-
-            "Código": linha["Código"],
-            "Descrição": linha["Descrição"],
-            "Quantidade": linha["Quantidade"]
-
-        })
-
-    st.table(
-        pd.DataFrame(tabela_vaga)
+    render_itens_vaga(
+        resultados_vaga
     )
 
 elif vaga:

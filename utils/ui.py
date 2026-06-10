@@ -179,6 +179,15 @@ def aplicar_layout():
             overflow: hidden;
         }
 
+        div[data-testid="stTable"] *,
+        div[data-testid="stDataFrame"] *,
+        div[data-testid="stTable"] td,
+        div[data-testid="stTable"] th {
+            color: #000000 !important;
+            background-color: #ffffff !important;
+            opacity: 1 !important;
+        }
+
         .home-panel,
         .panel,
         .kpi-card {
