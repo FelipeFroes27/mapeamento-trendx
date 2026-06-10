@@ -54,10 +54,27 @@ def aplicar_layout():
         [data-testid="stSidebar"] a,
         [data-testid="stSidebar"] p,
         [data-testid="stSidebar"] span,
+        [data-testid="stWidgetLabel"],
+        [data-testid="stWidgetLabel"] *,
+        [data-testid="stMarkdownContainer"],
+        [data-testid="stMarkdownContainer"] *,
+        [data-baseweb],
+        [data-baseweb] *,
+        [role="radiogroup"],
+        [role="radiogroup"] *,
+        [role="option"],
+        [role="option"] *,
+        [role="listbox"],
+        [role="listbox"] *,
         label,
+        label *,
+        p,
+        span,
         .stMarkdown,
         .stCaptionContainer {
             color: #000000 !important;
+            -webkit-text-fill-color: #000000 !important;
+            opacity: 1 !important;
         }
 
         .block-container,
@@ -237,6 +254,9 @@ def aplicar_layout():
 
         .stButton > button,
         div[data-baseweb="select"] > div,
+        div[data-baseweb="input"] > div,
+        div[data-baseweb="textarea"] > div,
+        div[data-baseweb="radio"] > div,
         input,
         textarea {
             border: 2px solid #000000 !important;
@@ -248,6 +268,55 @@ def aplicar_layout():
 
         .stButton > button {
             font-weight: 800 !important;
+        }
+
+        div[data-baseweb="radio"] label,
+        div[data-baseweb="radio"] label *,
+        [data-testid="stRadio"] label,
+        [data-testid="stRadio"] label *,
+        [data-testid="stRadio"] p,
+        [data-testid="stRadio"] span {
+            color: #000000 !important;
+            -webkit-text-fill-color: #000000 !important;
+            opacity: 1 !important;
+            font-weight: 700 !important;
+        }
+
+        [data-testid="stRadio"] [role="radiogroup"] {
+            border: 2px solid #000000 !important;
+            border-radius: 10px !important;
+            background: #ffffff !important;
+            padding: 10px 12px !important;
+        }
+
+        [data-testid="stRadio"] svg,
+        [data-baseweb="radio"] svg {
+            color: #000000 !important;
+            fill: #000000 !important;
+        }
+
+        div[data-baseweb="select"] input,
+        div[data-baseweb="select"] span,
+        div[data-baseweb="select"] div {
+            color: #000000 !important;
+            -webkit-text-fill-color: #000000 !important;
+            opacity: 1 !important;
+        }
+
+        [data-baseweb="popover"],
+        [data-baseweb="popover"] *,
+        [data-baseweb="menu"],
+        [data-baseweb="menu"] * {
+            background: #ffffff !important;
+            color: #000000 !important;
+            -webkit-text-fill-color: #000000 !important;
+            opacity: 1 !important;
+        }
+
+        [aria-selected="true"],
+        [role="option"]:hover {
+            background: #f2f2f2 !important;
+            color: #000000 !important;
         }
 
         input:disabled,
