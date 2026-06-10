@@ -241,6 +241,25 @@ def aplicar_layout():
             font-weight: 800 !important;
         }
 
+        [data-testid="stAlert"] {
+            border: 2px solid #000000 !important;
+            border-radius: 10px !important;
+        }
+
+        [data-testid="stAlert"] *,
+        [data-testid="stAlert"] p,
+        [data-testid="stAlert"] div,
+        [data-testid="stAlert"] span {
+            color: #000000 !important;
+            opacity: 1 !important;
+            visibility: visible !important;
+        }
+
+        [data-testid="stAlert"] svg {
+            fill: #000000 !important;
+            color: #000000 !important;
+        }
+
         .kpi-label {
             color: #333333;
             font-size: 13px;
