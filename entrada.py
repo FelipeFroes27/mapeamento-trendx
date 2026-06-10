@@ -4,12 +4,15 @@ from datetime import datetime
 
 from utils.sheets import (
     ler_aba,
-    abrir_aba
+    abrir_aba,
+    ler_aba_atual
 )
 
 from utils.estoque import (
     buscar_vaga,
-    buscar_produto
+    buscar_produto,
+    listar_valores_unicos,
+    quantidade_int
 )
 
 from utils.historico import (
@@ -58,12 +61,41 @@ dados_posicao = st.session_state.dados_posicao
 dados_bd = st.session_state.dados_bd
 
 
+def selectbox_digitavel(label, opcoes, key):
+
+    try:
+
+        return st.selectbox(
+            label,
+            [""] + opcoes,
+            format_func=lambda valor: "Digite ou selecione..." if valor == "" else valor,
+            accept_new_options=True,
+            key=key
+        )
+
+    except TypeError:
+
+        return st.text_input(
+            label,
+            key=key
+        )
+
+
 # ====================================
 # VAGA
 # ====================================
 
-vaga = st.text_input(
+vagas_cadastradas = listar_valores_unicos(
+    dados_posicao,
     "Vaga"
+)
+
+vaga = str(
+    selectbox_digitavel(
+        "Vaga",
+        vagas_cadastradas,
+        "entrada_vaga"
+    )
 ).strip().upper()
 
 
@@ -114,8 +146,17 @@ elif vaga:
 # PRODUTO
 # ====================================
 
-codigo = st.text_input(
-    "Código do produto"
+codigos_produtos = listar_valores_unicos(
+    dados_bd,
+    "Código"
+)
+
+codigo = str(
+    selectbox_digitavel(
+        "Código do produto",
+        codigos_produtos,
+        "entrada_codigo"
+    )
 ).strip()
 
 
@@ -345,10 +386,36 @@ if confirmar:
 
     else:
 
+        dados_posicao_atual = ler_aba_atual(
+            "Mapeamento Trendx",
+            "POSIÇÃO"
+        )
+
+        resultado_vaga_atual = buscar_vaga(
+            vaga,
+            dados_posicao_atual
+        )
+
+        vaga_existe_atual = resultado_vaga_atual[
+            "vaga_existe"
+        ]
+
+        resultados_vaga_atual = resultado_vaga_atual[
+            "resultados"
+        ]
+
         aba_posicao = abrir_aba(
             "Mapeamento Trendx",
             "POSIÇÃO"
         )
+
+        if vaga_existe_atual and not codigo:
+
+            st.error(
+                "A vaga já existe. Para cadastrar apenas uma vaga vazia, informe uma vaga nova."
+            )
+
+            st.stop()
 
         data_atual = datetime.now().strftime(
             "%d/%m/%Y %H:%M:%S"
@@ -359,7 +426,7 @@ if confirmar:
         # VAGA NOVA
         # ====================================
 
-        if not vaga_existe:
+        if not vaga_existe_atual:
 
             # ====================================
             # VAGA NOVA COM PRODUTO
@@ -408,12 +475,27 @@ if confirmar:
 
             produto_encontrado_vaga = False
 
+            possui_outro_produto_atual = False
+
+            for linha in resultados_vaga_atual:
+
+                codigo_existente_atual = str(
+                    linha["Código"]
+                ).strip()
+
+                if (
+                    codigo_existente_atual
+                    and codigo_existente_atual != codigo
+                ):
+
+                    possui_outro_produto_atual = True
+
 
             # ====================================
             # SOMAR PRODUTO
             # ====================================
 
-            for linha in resultados_vaga:
+            for linha in resultados_vaga_atual:
 
                 codigo_existente = str(
                     linha["Código"]
@@ -423,12 +505,11 @@ if confirmar:
 
                     produto_encontrado_vaga = True
 
-                    linha_real = (
-                        dados_posicao.index(linha)
-                        + 2
-                    )
+                    linha_real = linha[
+                        "_linha_planilha"
+                    ]
 
-                    quantidade_atual = int(
+                    quantidade_atual = quantidade_int(
                         linha["Quantidade"]
                     )
 
@@ -473,6 +554,17 @@ if confirmar:
 
             if not produto_encontrado_vaga:
 
+                if (
+                    possui_outro_produto_atual
+                    and modo_operacao is None
+                ):
+
+                    st.error(
+                        "A vaga mudou enquanto você operava. Atualize a tela e confirme novamente."
+                    )
+
+                    st.stop()
+
 
                 # ====================================
                 # MANTER AMBOS
@@ -507,7 +599,7 @@ if confirmar:
 
                     )
 
-                    for linha in resultados_vaga:
+                    for linha in resultados_vaga_atual:
 
                         codigo_existente = str(
                             linha["Código"]
@@ -515,12 +607,9 @@ if confirmar:
 
                         if codigo_existente == codigo_substituir:
 
-                            linha_real = (
-
-                                dados_posicao.index(linha)
-                                + 2
-
-                            )
+                            linha_real = linha[
+                                "_linha_planilha"
+                            ]
 
                             aba_posicao.update(
 
@@ -573,13 +662,9 @@ if confirmar:
 
                 else:
 
-                    linha_real = (
-
-                        dados_posicao.index(
-                            resultados_vaga[0]
-                        ) + 2
-
-                    )
+                    linha_real = resultados_vaga_atual[0][
+                        "_linha_planilha"
+                    ]
 
                     aba_posicao.update(
 

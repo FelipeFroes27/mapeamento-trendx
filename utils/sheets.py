@@ -63,3 +63,31 @@ def abrir_aba(nome_planilha, nome_aba):
     aba = planilha.worksheet(nome_aba)
 
     return aba
+
+
+def ler_aba_atual(nome_planilha, nome_aba):
+
+    aba = abrir_aba(
+        nome_planilha,
+        nome_aba
+    )
+
+    dados = aba.get_all_values()
+
+    cabecalho = dados[0]
+
+    linhas = dados[1:]
+
+    registros = []
+
+    for indice, linha in enumerate(linhas, start=2):
+
+        registro = dict(
+            zip(cabecalho, linha)
+        )
+
+        registro["_linha_planilha"] = indice
+
+        registros.append(registro)
+
+    return registros

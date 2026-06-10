@@ -69,6 +69,42 @@ def buscar_produto(codigo, dados_bd):
 
 
 # ====================================
+# LISTAR VALORES
+# ====================================
+
+def listar_valores_unicos(dados, coluna):
+
+    valores = []
+
+    for linha in dados:
+
+        valor = str(
+            linha.get(coluna, "")
+        ).strip()
+
+        if valor and valor not in valores:
+
+            valores.append(valor)
+
+    return sorted(valores)
+
+
+# ====================================
+# QUANTIDADE INTEIRA
+# ====================================
+
+def quantidade_int(valor):
+
+    try:
+
+        return int(float(str(valor).strip() or 0))
+
+    except (TypeError, ValueError):
+
+        return 0
+
+
+# ====================================
 # BUSCAR PRODUTO NA VAGA
 # ====================================
 

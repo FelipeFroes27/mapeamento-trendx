@@ -4,14 +4,17 @@ from datetime import datetime
 
 from utils.sheets import (
     ler_aba,
-    abrir_aba
+    abrir_aba,
+    ler_aba_atual
 )
 
 from utils.estoque import (
 
     buscar_vaga,
     validar_saida,
-    ultimo_produto_vaga
+    ultimo_produto_vaga,
+    listar_valores_unicos,
+    quantidade_int
 
 )
 
@@ -51,12 +54,41 @@ if "dados_posicao" not in st.session_state:
 dados_posicao = st.session_state.dados_posicao
 
 
+def selectbox_digitavel(label, opcoes, key):
+
+    try:
+
+        return st.selectbox(
+            label,
+            [""] + opcoes,
+            format_func=lambda valor: "Digite ou selecione..." if valor == "" else valor,
+            accept_new_options=True,
+            key=key
+        )
+
+    except TypeError:
+
+        return st.text_input(
+            label,
+            key=key
+        )
+
+
 # ====================================
 # VAGA
 # ====================================
 
-vaga = st.text_input(
+vagas_cadastradas = listar_valores_unicos(
+    dados_posicao,
     "Vaga"
+)
+
+vaga = str(
+    selectbox_digitavel(
+        "Vaga",
+        vagas_cadastradas,
+        "saida_vaga"
+    )
 ).strip().upper()
 
 
@@ -268,6 +300,57 @@ if confirmar:
 
     else:
 
+        codigo_selecionado = str(
+            linha_produto["Código"]
+        ).strip()
+
+        dados_posicao_atual = ler_aba_atual(
+            "Mapeamento Trendx",
+            "POSIÇÃO"
+        )
+
+        resultado_vaga_atual = buscar_vaga(
+            vaga,
+            dados_posicao_atual
+        )
+
+        resultados_vaga_atual = resultado_vaga_atual[
+            "resultados"
+        ]
+
+        linha_produto_atual = None
+
+        for linha in resultados_vaga_atual:
+
+            codigo_atual = str(
+                linha["Código"]
+            ).strip()
+
+            status_atual = str(
+                linha["Status"]
+            ).strip().upper()
+
+            if (
+                codigo_atual == codigo_selecionado
+                and status_atual != "DISPONIVEL"
+            ):
+
+                linha_produto_atual = linha
+
+                break
+
+        if linha_produto_atual is None:
+
+            st.error(
+                "A vaga mudou enquanto você operava. Atualize a tela e confirme novamente."
+            )
+
+            st.stop()
+
+        quantidade_atual = quantidade_int(
+            linha_produto_atual["Quantidade"]
+        )
+
         validacao = validar_saida(
 
             quantidade_atual,
@@ -297,18 +380,16 @@ if confirmar:
                 - quantidade_saida
             )
 
-            linha_real = (
-                dados_posicao.index(
-                    linha_produto
-                ) + 2
-            )
+            linha_real = linha_produto_atual[
+                "_linha_planilha"
+            ]
 
             codigo = str(
-                linha_produto["Código"]
+                linha_produto_atual["Código"]
             ).strip()
 
             descricao = str(
-                linha_produto["Descrição"]
+                linha_produto_atual["Descrição"]
             ).strip()
 
 
@@ -342,7 +423,7 @@ if confirmar:
             else:
 
                 ultimo_produto = ultimo_produto_vaga(
-                    resultados_vaga
+                    resultados_vaga_atual
                 )
 
 
