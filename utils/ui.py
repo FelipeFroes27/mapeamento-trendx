@@ -577,6 +577,28 @@ def aplicar_layout():
             font-weight: 800;
         }
 
+        .readonly-field {
+            border: 2px solid #000000;
+            border-radius: 8px;
+            background: #ffffff;
+            color: #000000;
+            padding: 12px 14px;
+            min-height: 48px;
+            font-size: 14px;
+            font-weight: 700;
+            line-height: 1.35;
+            display: flex;
+            align-items: center;
+            word-break: break-word;
+        }
+
+        .readonly-label {
+            margin-bottom: 6px;
+            color: #000000;
+            font-size: 14px;
+            font-weight: 500;
+        }
+
         @media (max-width: 900px) {
             .page-head,
             .home-hero {

@@ -211,14 +211,10 @@ if codigo and produto_encontrado:
         "Produto encontrado no BD"
     )
 
-    st.text_input(
-
-        "Descrição",
-
-        value=descricao,
-
-        disabled=True
-
+    st.markdown(
+        f'<div class="readonly-label">Descrição</div>'
+        f'<div class="readonly-field">{escape(descricao)}</div>',
+        unsafe_allow_html=True
     )
 
 

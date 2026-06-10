@@ -1,5 +1,6 @@
 import streamlit as st
 import pandas as pd
+from html import escape
 from datetime import datetime
 
 from utils.sheets import (
@@ -228,6 +229,12 @@ if linha_produto:
 
     st.info(
         f"Quantidade atual: {quantidade_atual}"
+    )
+
+    st.markdown(
+        f'<div class="readonly-label">Descrição</div>'
+        f'<div class="readonly-field">{escape(str(linha_produto.get("Descrição", "")).strip())}</div>',
+        unsafe_allow_html=True
     )
 
 
