@@ -23,7 +23,7 @@ from utils.historico import (
     registrar_historico
 )
 
-from utils.ui import preparar_pagina
+from utils.ui import preparar_pagina, campo_vaga_editavel
 
 
 # ====================================
@@ -89,13 +89,12 @@ vagas_cadastradas = listar_valores_unicos(
     "Vaga"
 )
 
-vaga = str(
-    selectbox_digitavel(
-        "Vaga",
-        vagas_cadastradas,
-        "saida_vaga"
-    )
-).strip().upper()
+vaga = campo_vaga_editavel(
+    "Vaga",
+    vagas_cadastradas,
+    "saida_vaga",
+    "saida_vaga_sugestao"
+)
 
 
 resultado_vaga = buscar_vaga(

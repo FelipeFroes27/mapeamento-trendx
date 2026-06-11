@@ -54,7 +54,33 @@ def aplicar_layout():
             visibility: hidden !important;
         }
 
-        footer, #MainMenu {visibility: hidden !important;}
+        footer,
+        #MainMenu,
+        [data-testid="stFooter"],
+        [data-testid="stDeployButton"],
+        [data-testid="stActionButton"],
+        [data-testid="stStatusWidget"],
+        [data-testid="manage-app-button"],
+        [data-testid="stAppDeployButton"],
+        .stDeployButton,
+        .viewerBadge_container__1QSob,
+        .viewerBadge_container__r5tak,
+        .viewerBadge_link__1S137,
+        .viewerBadge_link__qRIco,
+        div[class*="viewerBadge"],
+        a[class*="viewerBadge"],
+        div[class*="ViewerBadge"],
+        a[class*="ViewerBadge"],
+        div[class*="streamlit-footer"],
+        a[href*="streamlit.io/cloud"],
+        a[href*="streamlit.io"] {
+            display: none !important;
+            visibility: hidden !important;
+            opacity: 0 !important;
+            height: 0 !important;
+            width: 0 !important;
+            pointer-events: none !important;
+        }
 
         .stApp,
         [data-testid="stAppViewContainer"] {
@@ -943,6 +969,41 @@ def preparar_pagina(titulo, subtitulo="", mobile=False, pagina=None):
         aplicar_layout_mobile()
     render_menu_lateral()
     render_cabecalho(titulo, subtitulo)
+
+
+def campo_vaga_editavel(label, opcoes, key, sugestao_key):
+    opcoes_limpas = sorted({
+        str(opcao).strip().upper()
+        for opcao in opcoes
+        if str(opcao).strip()
+    })
+
+    if key in st.session_state:
+        st.session_state[key] = str(
+            st.session_state[key]
+        ).strip().upper()
+
+    def aplicar_sugestao():
+        sugestao = str(
+            st.session_state.get(sugestao_key, "")
+        ).strip().upper()
+
+        if sugestao:
+            st.session_state[key] = sugestao
+
+    st.selectbox(
+        "Selecionar vaga cadastrada",
+        [""] + opcoes_limpas,
+        format_func=lambda valor: "Digite ou selecione..." if valor == "" else valor,
+        key=sugestao_key,
+        on_change=aplicar_sugestao,
+    )
+
+    return st.text_input(
+        label,
+        key=key,
+        placeholder="Bipe ou digite a vaga"
+    ).strip().upper()
 
 
 def render_kpi(rotulo, valor, nota=""):
