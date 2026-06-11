@@ -12,6 +12,7 @@ from utils.sheets import (
 from utils.estoque import (
     buscar_vaga,
     buscar_produto,
+    listar_valores_unicos,
     quantidade_int
 )
 
@@ -19,7 +20,7 @@ from utils.historico import (
     registrar_historico
 )
 
-from utils.ui import preparar_pagina
+from utils.ui import preparar_pagina, campo_texto_com_sugestoes
 
 
 # ====================================
@@ -104,11 +105,17 @@ def render_itens_vaga(itens):
 # VAGA
 # ====================================
 
-vaga = st.text_input(
+vagas_cadastradas = listar_valores_unicos(
+    dados_posicao,
+    "Vaga"
+)
+
+vaga = campo_texto_com_sugestoes(
     "Vaga",
-    key="entrada_vaga",
-    placeholder="Bipe ou digite a vaga"
-).strip().upper()
+    vagas_cadastradas,
+    "entrada_vaga",
+    "Bipe ou digite a vaga"
+)
 
 
 resultado_vaga = buscar_vaga(
@@ -146,11 +153,17 @@ elif vaga:
 # PRODUTO
 # ====================================
 
-codigo = st.text_input(
+codigos_produtos = listar_valores_unicos(
+    dados_bd,
+    "Código"
+)
+
+codigo = campo_texto_com_sugestoes(
     "Código do produto",
-    key="entrada_codigo",
-    placeholder="Bipe ou digite o código"
-).strip().upper()
+    codigos_produtos,
+    "entrada_codigo",
+    "Bipe ou digite o código"
+)
 
 
 resultado_produto = buscar_produto(

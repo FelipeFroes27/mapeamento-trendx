@@ -14,6 +14,7 @@ from utils.estoque import (
     buscar_vaga,
     validar_saida,
     ultimo_produto_vaga,
+    listar_valores_unicos,
     quantidade_int
 
 )
@@ -22,7 +23,7 @@ from utils.historico import (
     registrar_historico
 )
 
-from utils.ui import preparar_pagina
+from utils.ui import preparar_pagina, campo_texto_com_sugestoes
 
 
 # ====================================
@@ -59,11 +60,17 @@ dados_posicao = st.session_state.dados_posicao
 # VAGA
 # ====================================
 
-vaga = st.text_input(
+vagas_cadastradas = listar_valores_unicos(
+    dados_posicao,
+    "Vaga"
+)
+
+vaga = campo_texto_com_sugestoes(
     "Vaga",
-    key="saida_vaga",
-    placeholder="Bipe ou digite a vaga"
-).strip().upper()
+    vagas_cadastradas,
+    "saida_vaga",
+    "Bipe ou digite a vaga"
+)
 
 
 resultado_vaga = buscar_vaga(
