@@ -972,19 +972,6 @@ def preparar_pagina(titulo, subtitulo="", mobile=False, pagina=None):
     render_cabecalho(titulo, subtitulo)
 
 
-def campo_vaga_editavel(label, opcoes, key, sugestao_key=None):
-    if key in st.session_state:
-        st.session_state[key] = str(
-            st.session_state[key]
-        ).strip().upper()
-
-    return st.text_input(
-        label,
-        key=key,
-        placeholder="Bipe ou digite a vaga"
-    ).strip().upper()
-
-
 def render_kpi(rotulo, valor, nota=""):
     st.markdown(
         f"""

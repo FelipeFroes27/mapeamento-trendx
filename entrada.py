@@ -20,7 +20,7 @@ from utils.historico import (
     registrar_historico
 )
 
-from utils.ui import preparar_pagina, campo_vaga_editavel
+from utils.ui import preparar_pagina
 
 
 # ====================================
@@ -129,16 +129,11 @@ def render_itens_vaga(itens):
 # VAGA
 # ====================================
 
-vagas_cadastradas = listar_valores_unicos(
-    dados_posicao,
-    "Vaga"
-)
-
-vaga = campo_vaga_editavel(
+vaga = st.text_input(
     "Vaga",
-    vagas_cadastradas,
-    "entrada_vaga"
-)
+    key="entrada_vaga",
+    placeholder="Bipe ou digite a vaga"
+).strip().upper()
 
 
 resultado_vaga = buscar_vaga(
