@@ -12,7 +12,6 @@ from utils.sheets import (
 from utils.estoque import (
     buscar_vaga,
     buscar_produto,
-    listar_valores_unicos,
     quantidade_int
 )
 
@@ -61,30 +60,6 @@ if "dados_bd" not in st.session_state:
 dados_posicao = st.session_state.dados_posicao
 
 dados_bd = st.session_state.dados_bd
-
-
-def selectbox_digitavel(label, opcoes, key):
-
-    try:
-
-        valor = st.selectbox(
-            label,
-            [""] + opcoes,
-            format_func=lambda valor: "Digite ou selecione..." if valor == "" else valor,
-            accept_new_options=True,
-            key=key
-        )
-
-        return str(
-            valor
-        ).strip().upper()
-
-    except TypeError:
-
-        return st.text_input(
-            label,
-            key=key
-        ).strip().upper()
 
 
 def render_itens_vaga(itens):
@@ -171,17 +146,10 @@ elif vaga:
 # PRODUTO
 # ====================================
 
-codigos_produtos = listar_valores_unicos(
-    dados_bd,
-    "Código"
-)
-
-codigo = str(
-    selectbox_digitavel(
-        "Código do produto",
-        codigos_produtos,
-        "entrada_codigo"
-    )
+codigo = st.text_input(
+    "Código do produto",
+    key="entrada_codigo",
+    placeholder="Bipe ou digite o código"
 ).strip().upper()
 
 
@@ -347,11 +315,25 @@ if vaga_existe and resultados_vaga and codigo:
 
         if modo_operacao == "SUBSTITUIR":
 
+            if st.button(
+                "Limpar produto selecionado",
+                key="entrada_limpar_substituicao",
+                use_container_width=True
+            ):
+
+                st.session_state.entrada_produto_substituir = ""
+
+                st.rerun()
+
             linha_substituir = st.selectbox(
 
                 "Selecione o produto que será substituído",
 
-                produtos_vaga
+                [""] + produtos_vaga,
+
+                format_func=lambda valor: "Selecione..." if valor == "" else valor,
+
+                key="entrada_produto_substituir"
 
             )
 
@@ -509,6 +491,12 @@ if confirmar:
 
         erro_entrada(
             "Descrição inválida"
+        )
+
+    elif modo_operacao == "SUBSTITUIR" and not linha_substituir:
+
+        erro_entrada(
+            "Selecione o produto que será substituído"
         )
 
     else:

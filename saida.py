@@ -55,30 +55,6 @@ if "dados_posicao" not in st.session_state:
 dados_posicao = st.session_state.dados_posicao
 
 
-def selectbox_digitavel(label, opcoes, key):
-
-    try:
-
-        valor = st.selectbox(
-            label,
-            [""] + opcoes,
-            format_func=lambda valor: "Digite ou selecione..." if valor == "" else valor,
-            accept_new_options=True,
-            key=key
-        )
-
-        return str(
-            valor
-        ).strip().upper()
-
-    except TypeError:
-
-        return st.text_input(
-            label,
-            key=key
-        ).strip().upper()
-
-
 # ====================================
 # VAGA
 # ====================================
@@ -193,17 +169,33 @@ if len(produtos_vaga) > 0:
         "Produtos da vaga"
     )
 
+    if st.button(
+        "Limpar produto selecionado",
+        key="saida_limpar_produto",
+        use_container_width=True
+    ):
+
+        st.session_state.saida_produto = ""
+
+        st.rerun()
+
     produto_selecionado = st.selectbox(
 
         "Selecione o produto",
 
-        produtos_vaga
+        [""] + produtos_vaga,
+
+        format_func=lambda valor: "Selecione..." if valor == "" else valor,
+
+        key="saida_produto"
 
     )
 
-    linha_produto = linhas_produtos[
-        produto_selecionado
-    ]
+    if produto_selecionado:
+
+        linha_produto = linhas_produtos[
+            produto_selecionado
+        ]
 
 
 # ====================================
