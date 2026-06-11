@@ -971,39 +971,34 @@ def preparar_pagina(titulo, subtitulo="", mobile=False, pagina=None):
     render_cabecalho(titulo, subtitulo)
 
 
-def campo_vaga_editavel(label, opcoes, key, sugestao_key):
+def campo_vaga_editavel(label, opcoes, key, sugestao_key=None):
     opcoes_limpas = sorted({
         str(opcao).strip().upper()
         for opcao in opcoes
         if str(opcao).strip()
     })
 
-    if key in st.session_state:
-        st.session_state[key] = str(
-            st.session_state[key]
+    opcoes_select = [""] + opcoes_limpas
+
+    try:
+        valor = st.selectbox(
+            label,
+            opcoes_select,
+            format_func=lambda valor: "Digite ou selecione..." if valor == "" else valor,
+            accept_new_options=True,
+            key=key,
+        )
+
+        return str(
+            valor
         ).strip().upper()
 
-    def aplicar_sugestao():
-        sugestao = str(
-            st.session_state.get(sugestao_key, "")
+    except TypeError:
+        return st.text_input(
+            label,
+            key=key,
+            placeholder="Bipe ou digite a vaga"
         ).strip().upper()
-
-        if sugestao:
-            st.session_state[key] = sugestao
-
-    st.selectbox(
-        "Selecionar vaga cadastrada",
-        [""] + opcoes_limpas,
-        format_func=lambda valor: "Digite ou selecione..." if valor == "" else valor,
-        key=sugestao_key,
-        on_change=aplicar_sugestao,
-    )
-
-    return st.text_input(
-        label,
-        key=key,
-        placeholder="Bipe ou digite a vaga"
-    ).strip().upper()
 
 
 def render_kpi(rotulo, valor, nota=""):

@@ -92,8 +92,7 @@ vagas_cadastradas = listar_valores_unicos(
 vaga = campo_vaga_editavel(
     "Vaga",
     vagas_cadastradas,
-    "saida_vaga",
-    "saida_vaga_sugestao"
+    "saida_vaga"
 )
 
 
