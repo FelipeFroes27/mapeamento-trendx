@@ -972,66 +972,6 @@ def preparar_pagina(titulo, subtitulo="", mobile=False, pagina=None):
     render_cabecalho(titulo, subtitulo)
 
 
-def definir_valor_campo(chave, valor):
-    st.session_state[chave] = str(
-        valor
-    ).strip().upper()
-
-
-def campo_texto_com_sugestoes(label, opcoes, key, placeholder="", max_sugestoes=6):
-    opcoes_limpas = sorted({
-        str(opcao).strip().upper()
-        for opcao in opcoes
-        if str(opcao).strip()
-    })
-
-    if key in st.session_state:
-        st.session_state[key] = str(
-            st.session_state[key]
-        ).strip().upper()
-
-    valor = st.text_input(
-        label,
-        key=key,
-        placeholder=placeholder
-    ).strip().upper()
-
-    termo = valor.strip().upper()
-
-    if termo:
-        sugestoes = [
-            opcao
-            for opcao in opcoes_limpas
-            if termo in opcao and opcao != termo
-        ]
-    else:
-        sugestoes = opcoes_limpas
-
-    sugestoes = sugestoes[:max_sugestoes]
-
-    if sugestoes:
-        st.markdown(
-            '<div class="suggestion-list">',
-            unsafe_allow_html=True
-        )
-
-        for indice, sugestao in enumerate(sugestoes):
-            st.button(
-                sugestao,
-                key=f"{key}_sugestao_{indice}",
-                on_click=definir_valor_campo,
-                args=(key, sugestao),
-                use_container_width=True,
-            )
-
-        st.markdown(
-            '</div>',
-            unsafe_allow_html=True
-        )
-
-    return valor
-
-
 def render_kpi(rotulo, valor, nota=""):
     st.markdown(
         f"""
