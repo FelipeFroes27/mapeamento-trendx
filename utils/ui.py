@@ -830,6 +830,7 @@ def aplicar_layout_mobile():
     )
 
 
+@st.cache_data
 def _imagem_base64(caminho):
     arquivo = Path(caminho)
     if not arquivo.exists():
@@ -972,33 +973,16 @@ def preparar_pagina(titulo, subtitulo="", mobile=False, pagina=None):
 
 
 def campo_vaga_editavel(label, opcoes, key, sugestao_key=None):
-    opcoes_limpas = sorted({
-        str(opcao).strip().upper()
-        for opcao in opcoes
-        if str(opcao).strip()
-    })
-
-    opcoes_select = [""] + opcoes_limpas
-
-    try:
-        valor = st.selectbox(
-            label,
-            opcoes_select,
-            format_func=lambda valor: "Digite ou selecione..." if valor == "" else valor,
-            accept_new_options=True,
-            key=key,
-        )
-
-        return str(
-            valor
+    if key in st.session_state:
+        st.session_state[key] = str(
+            st.session_state[key]
         ).strip().upper()
 
-    except TypeError:
-        return st.text_input(
-            label,
-            key=key,
-            placeholder="Bipe ou digite a vaga"
-        ).strip().upper()
+    return st.text_input(
+        label,
+        key=key,
+        placeholder="Bipe ou digite a vaga"
+    ).strip().upper()
 
 
 def render_kpi(rotulo, valor, nota=""):

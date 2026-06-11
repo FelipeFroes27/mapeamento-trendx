@@ -32,11 +32,10 @@ def conectar_google_sheets():
 @st.cache_data(ttl=30)
 def ler_aba(nome_planilha, nome_aba):
 
-    cliente = conectar_google_sheets()
-
-    planilha = cliente.open(nome_planilha)
-
-    aba = planilha.worksheet(nome_aba)
+    aba = abrir_aba(
+        nome_planilha,
+        nome_aba
+    )
 
     dados = aba.get_all_values()
 
@@ -58,13 +57,24 @@ def ler_aba(nome_planilha, nome_aba):
     )
 
 
-def abrir_aba(nome_planilha, nome_aba):
+@st.cache_resource
+def abrir_planilha(nome_planilha):
 
     cliente = conectar_google_sheets()
 
-    planilha = cliente.open(nome_planilha)
+    return cliente.open(nome_planilha)
 
-    aba = planilha.worksheet(nome_aba)
+
+@st.cache_resource
+def abrir_aba(nome_planilha, nome_aba):
+
+    planilha = abrir_planilha(
+        nome_planilha
+    )
+
+    aba = planilha.worksheet(
+        nome_aba
+    )
 
     return aba
 

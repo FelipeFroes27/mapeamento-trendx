@@ -896,21 +896,7 @@ if confirmar:
         st.session_state.ultima_entrada_horario = datetime.now()
 
 
-        # ====================================
-        # LIMPA CACHE
-        # ====================================
-
         st.cache_data.clear()
-
-
-        # ====================================
-        # ATUALIZA CACHE
-        # ====================================
-
-        st.session_state.dados_posicao = ler_aba(
-            "Mapeamento Trendx",
-            "POSIÇÃO"
-        )
 
 
         # ====================================
