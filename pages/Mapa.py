@@ -961,12 +961,12 @@ with col_lateral:
         st.markdown('<div class="map-side-label-title">Produto</div>', unsafe_allow_html=True)
 
         categorias = opcoes_multiselect(df_filtrado, "Categoria")
-        categorias_selecionadas = st.multiselect(
+        categoria_selecionada = selectbox_filtro(
             "Categoria",
             categorias,
-            default=categorias,
-            key="mapa_filtro_categoria",
+            "mapa_filtro_categoria_combo",
         )
+        categorias_selecionadas = valor_combobox(categoria_selecionada)
 
         base_marca = aplicar_filtro_visual(
             df_filtrado,
