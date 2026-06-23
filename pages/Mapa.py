@@ -485,7 +485,7 @@ st.markdown(
     .map-module-label {
         min-height: 28px;
         border-left: var(--rack-post-width) solid #4b5563;
-        border-right: var(--rack-post-width) solid #4b5563;
+        border-right: 0;
         border-bottom: 2px solid #000000;
         background: #f8fafc;
     }
@@ -494,7 +494,7 @@ st.markdown(
         min-height: 48px;
         border: 2px solid #000000;
         border-left: var(--rack-post-width) solid #4b5563;
-        border-right: var(--rack-post-width) solid #4b5563;
+        border-right: 0;
         border-bottom: 0;
         display: flex;
         gap: 4px;
@@ -513,8 +513,13 @@ st.markdown(
     .map-bay.missing {
         border-style: solid;
         border-left: var(--rack-post-width) solid #4b5563;
-        border-right: var(--rack-post-width) solid #4b5563;
+        border-right: 0;
         background: #ffffff;
+    }
+
+    .map-header-row .map-module-label:last-child,
+    .map-row .map-bay:last-child {
+        border-right: var(--rack-post-width) solid #4b5563;
     }
 
     .map-slot {
