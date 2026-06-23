@@ -1,4 +1,5 @@
 import base64
+from html import escape
 from pathlib import Path
 
 import streamlit as st
@@ -940,25 +941,30 @@ def _aplicar_layout_menu(menu_aberto):
 
 
 def render_cabecalho(titulo, subtitulo=""):
-    logo_branco = _imagem_base64(LOGO_BRANCO)
-    logo_preto = _imagem_base64(LOGO_PRETO)
-    subtitulo_html = f"<p>{subtitulo}</p>" if subtitulo else ""
+    titulo_html = escape(str(titulo))
+    subtitulo_html = f"<p>{escape(str(subtitulo))}</p>" if subtitulo else ""
 
-    st.markdown(
-        f"""
-        <div class="page-head">
+    coluna_titulo, coluna_logos = st.columns([0.78, 0.22])
+
+    with coluna_titulo:
+        st.markdown(
+            f"""
             <div class="page-title">
-                <h1>{titulo}</h1>
+                <h1>{titulo_html}</h1>
                 {subtitulo_html}
             </div>
-            <div class="page-logos">
-                <img src="data:image/bmp;base64,{logo_branco}" alt="Trendx">
-                <img src="data:image/png;base64,{logo_preto}" alt="Goper">
-            </div>
-        </div>
-        """,
-        unsafe_allow_html=True,
-    )
+            """,
+            unsafe_allow_html=True,
+        )
+
+    with coluna_logos:
+        logo_cols = st.columns([0.72, 0.28], gap="small")
+        with logo_cols[0]:
+            if Path(LOGO_BRANCO).exists():
+                st.image(LOGO_BRANCO, width=104)
+        with logo_cols[1]:
+            if Path(LOGO_PRETO).exists():
+                st.image(LOGO_PRETO, width=34)
 
 
 def preparar_pagina(titulo, subtitulo="", mobile=False, pagina=None):
