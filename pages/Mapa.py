@@ -18,16 +18,19 @@ st.set_page_config(
 
 preparar_pagina(
     "Mapa de Vagas",
-    "Visualizacao 2D das posicoes por zona, rua, lado, modulo, nivel e vao.",
     pagina="mapa",
 )
 
 
 @st.cache_data(ttl=30)
 def carregar_dados_mapa():
-    return preparar_posicao(
+    posicao = preparar_posicao(
         ler_aba("Mapeamento Trendx", "POSIÇÃO")
     )
+    bd = pd.DataFrame(
+        ler_aba("Mapeamento Trendx", "BD PRODUTOS")
+    )
+    return posicao, bd
 
 
 def texto(valor):
@@ -59,6 +62,12 @@ def valor_campo(linha, campo):
     alvos = {
         "codigo": {"codigo", "cdigo"},
         "descricao": {"descricao", "descrio"},
+        "categoria": {"categoria"},
+        "tipo": {"tipo"},
+        "marca": {"marca"},
+        "referencia": {"referencia", "referncia"},
+        "grupo": {"grupo"},
+        "subgrupo": {"subgrupo"},
     }
 
     for coluna in linha.index:
@@ -66,6 +75,29 @@ def valor_campo(linha, campo):
             return linha.get(coluna)
 
     return ""
+
+
+def preparar_bd_mapa(df_bd):
+    if df_bd.empty:
+        return {}
+
+    mapa = {}
+    for _, linha in df_bd.iterrows():
+        codigo = texto(valor_campo(linha, "codigo")).upper()
+        if not codigo or codigo in mapa:
+            continue
+
+        mapa[codigo] = {
+            "Categoria": texto(valor_campo(linha, "categoria")),
+            "Tipo": texto(valor_campo(linha, "tipo")),
+            "Marca": texto(valor_campo(linha, "marca")),
+            "Referencia": texto(valor_campo(linha, "referencia")),
+            "Grupo": texto(valor_campo(linha, "grupo")),
+            "Subgrupo": texto(valor_campo(linha, "subgrupo")),
+            "Item": texto(valor_campo(linha, "descricao")),
+        }
+
+    return mapa
 
 
 def numero_ordenacao(valor):
@@ -153,12 +185,19 @@ COLUNAS_VAGAS = [
     "Quantidade",
     "Codigo",
     "Descricao",
+    "Categoria",
+    "Tipo",
+    "Marca",
+    "Referencia",
+    "Grupo",
+    "Subgrupo",
+    "Item",
     "EhSC",
     "Detalhes",
 ]
 
 
-def agregar_vagas(df_mapa):
+def agregar_vagas(df_mapa, bd_produtos):
     if df_mapa.empty:
         return pd.DataFrame(columns=COLUNAS_VAGAS)
 
@@ -173,6 +212,8 @@ def agregar_vagas(df_mapa):
         ocupada = quantidade_total > 0 or any(grupo["Status"].astype(str).str.upper() == "OCUPADO")
         codigo_principal = texto(primeira.get("Codigo")).upper()
         descricao_principal = texto(primeira.get("Descricao"))
+        dados_produto = bd_produtos.get(codigo_principal, {})
+        item_principal = dados_produto.get("Item") or descricao_principal
         eh_sc = codigo_principal == "SC"
 
         descricoes = []
@@ -195,6 +236,13 @@ def agregar_vagas(df_mapa):
                 "Quantidade": quantidade_total,
                 "Codigo": codigo_principal,
                 "Descricao": descricao_principal,
+                "Categoria": dados_produto.get("Categoria", ""),
+                "Tipo": dados_produto.get("Tipo", ""),
+                "Marca": dados_produto.get("Marca", ""),
+                "Referencia": dados_produto.get("Referencia", ""),
+                "Grupo": dados_produto.get("Grupo", ""),
+                "Subgrupo": dados_produto.get("Subgrupo", ""),
+                "Item": item_principal,
                 "EhSC": eh_sc,
                 "Detalhes": "\n".join(descricoes) if descricoes else "Sem produto",
             }
@@ -231,7 +279,36 @@ def aplicar_filtro_multiselect(df, coluna, selecionados):
     return df[df[coluna].astype(str).isin(selecionados)].copy()
 
 
+def aplicar_filtro_visual(df, filtros):
+    df = df.copy()
+
+    if df.empty:
+        df["VisivelMapa"] = False
+        return df
+
+    mascara = pd.Series(True, index=df.index)
+    for coluna, selecionados in filtros.items():
+        if selecionados is None or coluna not in df.columns:
+            continue
+        if not selecionados:
+            mascara = pd.Series(False, index=df.index)
+            break
+        mascara = mascara & df[coluna].fillna("").astype(str).isin(selecionados)
+
+    df["VisivelMapa"] = mascara
+    return df
+
+
+def filtro_produto(coluna, selecionados, opcoes):
+    if len(selecionados) == len(opcoes):
+        return None
+    return selecionados
+
+
 def slot_html(linha, vaos=None, grande=False):
+    if not bool(linha.get("VisivelMapa", True)):
+        return '<div class="map-slot empty"></div>'
+
     status = str(linha["StatusMapa"]).lower()
     vaga = escape(str(linha["Vaga"]))
     itens = escape(str(linha["Itens"]))
@@ -784,14 +861,15 @@ st.markdown(
 )
 
 
-df_posicao = carregar_dados_mapa()
+df_posicao, df_bd = carregar_dados_mapa()
 
 if df_posicao.empty:
     st.warning("Não há dados na aba POSIÇÃO.")
     st.stop()
 
 df_mapa, df_fora_padrao = preparar_mapa(df_posicao)
-df_vagas = agregar_vagas(df_mapa)
+bd_produtos = preparar_bd_mapa(df_bd)
+df_vagas = agregar_vagas(df_mapa, bd_produtos)
 
 col_lateral, col_mapa = st.columns(
     [0.95, 7.05],
@@ -862,23 +940,179 @@ with col_lateral:
             status_selecionados,
         )
 
+        st.markdown('<div class="map-side-label-title">Produto</div>', unsafe_allow_html=True)
+
+        categorias = opcoes_multiselect(df_filtrado, "Categoria")
+        categorias_selecionadas = st.multiselect(
+            "Categoria",
+            categorias,
+            default=categorias,
+            key="mapa_filtro_categoria",
+        )
+
+        base_marca = aplicar_filtro_visual(
+            df_filtrado,
+            {
+                "Categoria": filtro_produto(
+                    "Categoria",
+                    categorias_selecionadas,
+                    categorias,
+                )
+            },
+        )
+        marcas = opcoes_multiselect(
+            base_marca[base_marca["VisivelMapa"]],
+            "Marca",
+        )
+        marcas_selecionadas = st.multiselect(
+            "Marca",
+            marcas,
+            default=marcas,
+            key="mapa_filtro_marca",
+        )
+
+        base_tipo = aplicar_filtro_visual(
+            df_filtrado,
+            {
+                "Categoria": filtro_produto(
+                    "Categoria",
+                    categorias_selecionadas,
+                    categorias,
+                ),
+                "Marca": filtro_produto(
+                    "Marca",
+                    marcas_selecionadas,
+                    marcas,
+                ),
+            },
+        )
+        tipos = opcoes_multiselect(
+            base_tipo[base_tipo["VisivelMapa"]],
+            "Tipo",
+        )
+        tipos_selecionados = st.multiselect(
+            "Tipo",
+            tipos,
+            default=tipos,
+            key="mapa_filtro_tipo",
+        )
+
+        base_item = aplicar_filtro_visual(
+            df_filtrado,
+            {
+                "Categoria": filtro_produto(
+                    "Categoria",
+                    categorias_selecionadas,
+                    categorias,
+                ),
+                "Marca": filtro_produto(
+                    "Marca",
+                    marcas_selecionadas,
+                    marcas,
+                ),
+                "Tipo": filtro_produto(
+                    "Tipo",
+                    tipos_selecionados,
+                    tipos,
+                ),
+            },
+        )
+
+        grupos = opcoes_multiselect(
+            base_item[base_item["VisivelMapa"]],
+            "Grupo",
+        )
+        grupos_selecionados = st.multiselect(
+            "Grupo",
+            grupos,
+            default=grupos,
+            key="mapa_filtro_grupo",
+        )
+
+        base_item = aplicar_filtro_visual(
+            df_filtrado,
+            {
+                "Categoria": filtro_produto(
+                    "Categoria",
+                    categorias_selecionadas,
+                    categorias,
+                ),
+                "Marca": filtro_produto(
+                    "Marca",
+                    marcas_selecionadas,
+                    marcas,
+                ),
+                "Tipo": filtro_produto(
+                    "Tipo",
+                    tipos_selecionados,
+                    tipos,
+                ),
+                "Grupo": filtro_produto(
+                    "Grupo",
+                    grupos_selecionados,
+                    grupos,
+                ),
+            },
+        )
+        itens = opcoes_multiselect(
+            base_item[base_item["VisivelMapa"]],
+            "Item",
+        )
+        itens_selecionados = st.multiselect(
+            "Item",
+            itens,
+            default=itens,
+            key="mapa_filtro_item",
+        )
+
+        df_visual = aplicar_filtro_visual(
+            df_filtrado,
+            {
+                "Categoria": filtro_produto(
+                    "Categoria",
+                    categorias_selecionadas,
+                    categorias,
+                ),
+                "Marca": filtro_produto(
+                    "Marca",
+                    marcas_selecionadas,
+                    marcas,
+                ),
+                "Tipo": filtro_produto(
+                    "Tipo",
+                    tipos_selecionados,
+                    tipos,
+                ),
+                "Grupo": filtro_produto(
+                    "Grupo",
+                    grupos_selecionados,
+                    grupos,
+                ),
+                "Item": filtro_produto(
+                    "Item",
+                    itens_selecionados,
+                    itens,
+                ),
+            },
+        )
+
+        df_visivel = df_visual[df_visual["VisivelMapa"]] if not df_visual.empty else df_visual
         resumo_filtrado = {
-            "total": int(df_filtrado["Vaga"].nunique()) if not df_filtrado.empty else 0,
-            "ocupadas": int(df_filtrado[df_filtrado["StatusMapa"] == "OCUPADA"]["Vaga"].nunique()) if not df_filtrado.empty else 0,
-            "disponiveis": int(df_filtrado[df_filtrado["StatusMapa"] == "DISPONIVEL"]["Vaga"].nunique()) if not df_filtrado.empty else 0,
-            "itens": int(df_filtrado["Itens"].sum()) if not df_filtrado.empty else 0,
-            "quantidade": int(df_filtrado["Quantidade"].sum()) if not df_filtrado.empty else 0,
+            "total": int(df_visivel["Vaga"].nunique()) if not df_visivel.empty else 0,
+            "ocupadas": int(df_visivel[df_visivel["StatusMapa"] == "OCUPADA"]["Vaga"].nunique()) if not df_visivel.empty else 0,
+            "disponiveis": int(df_visivel[df_visivel["StatusMapa"] == "DISPONIVEL"]["Vaga"].nunique()) if not df_visivel.empty else 0,
+            "itens": int(df_visivel["Itens"].sum()) if not df_visivel.empty else 0,
+            "quantidade": int(df_visivel["Quantidade"].sum()) if not df_visivel.empty else 0,
         }
 
         st.markdown('<div class="map-side-label-title">Resumo</div>', unsafe_allow_html=True)
         st.markdown(
             card_lateral("Vagas", resumo_filtrado["total"], "No filtro atual")
             + card_lateral("Ocupadas", resumo_filtrado["ocupadas"], "Com produto e saldo")
-            + card_lateral("Disponíveis", resumo_filtrado["disponiveis"], "Sem produto em saldo")
+            + card_lateral("Disponiveis", resumo_filtrado["disponiveis"], "Sem produto em saldo")
             + card_lateral("Saldo", resumo_filtrado["quantidade"], "Quantidade total"),
             unsafe_allow_html=True,
         )
-
 with col_mapa:
     st.markdown(
         '<div class="map-legend">'
@@ -888,7 +1122,7 @@ with col_mapa:
         unsafe_allow_html=True,
     )
 
-    render_mapa(df_filtrado)
+    render_mapa(df_visual)
 
 if not df_fora_padrao.empty:
     with col_mapa:
