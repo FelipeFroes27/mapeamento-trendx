@@ -117,6 +117,9 @@ COLUNAS_VAGAS = [
     "StatusMapa",
     "Itens",
     "Quantidade",
+    "Codigo",
+    "Descricao",
+    "EhSC",
     "Detalhes",
 ]
 
@@ -134,6 +137,9 @@ def agregar_vagas(df_mapa):
 
         quantidade_total = int(produtos["Quantidade"].sum()) if not produtos.empty else 0
         ocupada = quantidade_total > 0 or any(grupo["Status"].astype(str).str.upper() == "OCUPADO")
+        codigo_principal = texto(primeira.get("CÃ³digo")).upper()
+        descricao_principal = texto(primeira.get("DescriÃ§Ã£o"))
+        eh_sc = codigo_principal == "SC"
 
         descricoes = []
         for _, item in produtos.head(4).iterrows():
@@ -153,6 +159,9 @@ def agregar_vagas(df_mapa):
                 "StatusMapa": "OCUPADA" if ocupada else "DISPONIVEL",
                 "Itens": len(produtos),
                 "Quantidade": quantidade_total,
+                "Codigo": codigo_principal,
+                "Descricao": descricao_principal,
+                "EhSC": eh_sc,
                 "Detalhes": "\n".join(descricoes) if descricoes else "Sem produto",
             }
         )
@@ -188,6 +197,102 @@ def aplicar_filtro_multiselect(df, coluna, selecionados):
     return df[df[coluna].astype(str).isin(selecionados)].copy()
 
 
+def slot_html(linha, vaos=None, grande=False):
+    status = str(linha["StatusMapa"]).lower()
+    vaga = escape(str(linha["Vaga"]))
+    quantidade = escape(str(linha["Quantidade"]))
+    itens = escape(str(linha["Itens"]))
+    detalhes = escape(str(linha["Detalhes"]))
+    vaos = vaos or [str(linha["Vao"])]
+    vao_label = escape("+".join(str(vao) for vao in vaos))
+    classe_grande = " grande" if grande else ""
+    titulo = f"{vaga}\n{detalhes}"
+
+    conteudo = "SC" if bool(linha.get("EhSC", False)) else quantidade
+
+    return (
+        f'<div class="map-slot {status}{classe_grande}" title="{titulo}">'
+        f'<span>{vao_label}</span>'
+        f'<strong>{conteudo}</strong>'
+        f'<small>{itens} item</small>'
+        f'</div>'
+    )
+
+
+def slots_com_sc(df_celula, vaos_esperados):
+    linhas_por_vao = {
+        str(linha["Vao"]): linha
+        for _, linha in df_celula.iterrows()
+    }
+    linhas = [
+        linhas_por_vao.get(str(vao))
+        for vao in vaos_esperados
+    ]
+    usados = set()
+    slots = []
+
+    for indice, linha in enumerate(linhas):
+        if indice in usados:
+            continue
+
+        if linha is None:
+            slots.append('<div class="map-slot empty"></div>')
+            usados.add(indice)
+            continue
+
+        eh_sc = bool(linha.get("EhSC", False))
+        proximo_indice = indice + 1
+
+        if eh_sc:
+            if (
+                proximo_indice < len(linhas)
+                and proximo_indice not in usados
+                and linhas[proximo_indice] is not None
+                and not bool(linhas[proximo_indice].get("EhSC", False))
+            ):
+                vizinho = linhas[proximo_indice]
+                slots.append(
+                    slot_html(
+                        vizinho,
+                        [linha["Vao"], vizinho["Vao"]],
+                        grande=True,
+                    )
+                )
+                usados.add(indice)
+                usados.add(proximo_indice)
+            else:
+                slots.append(
+                    slot_html(linha)
+                )
+                usados.add(indice)
+
+            continue
+
+        if (
+            proximo_indice < len(linhas)
+            and proximo_indice not in usados
+            and linhas[proximo_indice] is not None
+            and bool(linhas[proximo_indice].get("EhSC", False))
+        ):
+            vizinho = linhas[proximo_indice]
+            slots.append(
+                slot_html(
+                    linha,
+                    [linha["Vao"], vizinho["Vao"]],
+                    grande=True,
+                )
+            )
+            usados.add(indice)
+            usados.add(proximo_indice)
+        else:
+            slots.append(
+                slot_html(linha)
+            )
+            usados.add(indice)
+
+    return slots
+
+
 def render_mapa(df_vagas):
     if df_vagas.empty:
         st.warning("Nenhuma vaga no padrão ZONA.RUA.LADO.MODULO.NIVEL.VAO para montar o mapa.")
@@ -209,6 +314,10 @@ def render_mapa(df_vagas):
             key=numero_ordenacao,
             reverse=True,
         )
+        vaos_esperados = sorted(
+            grupo["Vao"].dropna().astype(str).unique(),
+            key=numero_ordenacao,
+        )
 
         linhas_html = []
         for nivel in niveis:
@@ -226,22 +335,10 @@ def render_mapa(df_vagas):
                     celulas.append('<div class="map-bay missing"></div>')
                     continue
 
-                subslots = []
-                for _, linha in df_celula.iterrows():
-                    status = str(linha["StatusMapa"]).lower()
-                    vaga = escape(str(linha["Vaga"]))
-                    quantidade = escape(str(linha["Quantidade"]))
-                    itens = escape(str(linha["Itens"]))
-                    detalhes = escape(str(linha["Detalhes"]))
-                    vao = escape(str(linha["Vao"]))
-
-                    subslots.append(
-                        f'<div class="map-slot {status}" title="{vaga}\n{detalhes}">'
-                        f'<span>{vao}</span>'
-                        f'<strong>{quantidade}</strong>'
-                        f'<small>{itens} item</small>'
-                        f'</div>'
-                    )
+                subslots = slots_com_sc(
+                    df_celula,
+                    vaos_esperados,
+                )
 
                 celulas.append(
                     f'<div class="map-bay">'
@@ -556,6 +653,15 @@ st.markdown(
         padding: 4px 3px;
         color: #000000;
         box-sizing: border-box;
+    }
+
+    .map-slot.grande {
+        flex: 2 1 0;
+    }
+
+    .map-slot.empty {
+        border-color: transparent;
+        background: transparent;
     }
 
     .map-slot.ocupada {
