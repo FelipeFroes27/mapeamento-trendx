@@ -1,3 +1,5 @@
+import re
+import unicodedata
 from html import escape
 
 import pandas as pd
@@ -32,6 +34,38 @@ def texto(valor):
     if pd.isna(valor):
         return ""
     return str(valor).strip()
+
+
+def valor_linha(linha, *colunas):
+    for coluna in colunas:
+        if coluna in linha:
+            return linha.get(coluna)
+    return ""
+
+
+def normalizar_nome_coluna(coluna):
+    texto_coluna = unicodedata.normalize(
+        "NFKD",
+        str(coluna).lower()
+    )
+    return re.sub(
+        r"[^a-z0-9]",
+        "",
+        texto_coluna
+    )
+
+
+def valor_campo(linha, campo):
+    alvos = {
+        "codigo": {"codigo", "cdigo"},
+        "descricao": {"descricao", "descrio"},
+    }
+
+    for coluna in linha.index:
+        if normalizar_nome_coluna(coluna) in alvos.get(campo, set()):
+            return linha.get(coluna)
+
+    return ""
 
 
 def numero_ordenacao(valor):
@@ -77,8 +111,8 @@ def preparar_mapa(df_posicao):
                 {
                     "Vaga": vaga,
                     "Status": texto(linha.get("Status")).upper(),
-                    "Código": texto(linha.get("Código")),
-                    "Descrição": texto(linha.get("Descrição")),
+                    "Codigo": texto(valor_campo(linha, "codigo")),
+                    "Descricao": texto(valor_campo(linha, "descricao")),
                     "Quantidade": linha.get("Quantidade", 0),
                 }
             )
@@ -88,8 +122,8 @@ def preparar_mapa(df_posicao):
             **partes,
             "Vaga": vaga,
             "Status": texto(linha.get("Status")).upper(),
-            "Código": texto(linha.get("Código")),
-            "Descrição": texto(linha.get("Descrição")),
+            "Codigo": texto(valor_campo(linha, "codigo")),
+            "Descricao": texto(valor_campo(linha, "descricao")),
             "Quantidade": linha.get("Quantidade", 0),
         }
         registros.append(registro)
@@ -132,19 +166,19 @@ def agregar_vagas(df_mapa):
     for vaga, grupo in df_mapa.groupby("Vaga", sort=False):
         primeira = grupo.iloc[0]
         produtos = grupo[
-            grupo["Código"].fillna("").astype(str).str.strip() != ""
+            grupo["Codigo"].fillna("").astype(str).str.strip() != ""
         ].copy()
 
         quantidade_total = int(produtos["Quantidade"].sum()) if not produtos.empty else 0
         ocupada = quantidade_total > 0 or any(grupo["Status"].astype(str).str.upper() == "OCUPADO")
-        codigo_principal = texto(primeira.get("CÃ³digo")).upper()
-        descricao_principal = texto(primeira.get("DescriÃ§Ã£o"))
+        codigo_principal = texto(primeira.get("Codigo")).upper()
+        descricao_principal = texto(primeira.get("Descricao"))
         eh_sc = codigo_principal == "SC"
 
         descricoes = []
         for _, item in produtos.head(4).iterrows():
             descricoes.append(
-                f'{texto(item.get("Código"))} - {texto(item.get("Descrição"))} | Qtd: {texto(item.get("Quantidade"))}'
+                f'{texto(item.get("Codigo"))} - {texto(item.get("Descricao"))} | Qtd: {texto(item.get("Quantidade"))}'
             )
 
         linhas.append(
