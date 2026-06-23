@@ -374,6 +374,27 @@ st.markdown(
         padding-bottom: 3px !important;
     }
 
+    .st-key-mapa_lateral div[data-testid="stMultiSelect"] input {
+        width: 0 !important;
+        min-width: 0 !important;
+        max-width: 0 !important;
+        padding: 0 !important;
+        margin: 0 !important;
+        border: 0 !important;
+        opacity: 0 !important;
+    }
+
+    .st-key-mapa_lateral div[data-testid="stMultiSelect"] div[data-baseweb="input"],
+    .st-key-mapa_lateral div[data-testid="stMultiSelect"] div[data-baseweb="input"] > div {
+        width: 0 !important;
+        min-width: 0 !important;
+        max-width: 0 !important;
+        padding: 0 !important;
+        margin: 0 !important;
+        border: 0 !important;
+        background: transparent !important;
+    }
+
     .st-key-mapa_atualizar_dados button {
         min-height: 38px !important;
         margin-bottom: .3cm !important;
