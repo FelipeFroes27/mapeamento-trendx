@@ -300,9 +300,26 @@ def aplicar_filtro_visual(df, filtros):
 
 
 def filtro_produto(coluna, selecionados, opcoes):
+    if selecionados is None:
+        return None
     if len(selecionados) == len(opcoes):
         return None
     return selecionados
+
+
+def valor_combobox(valor):
+    if not valor or valor == "Todos":
+        return None
+    return [valor]
+
+
+def selectbox_filtro(rotulo, opcoes, key):
+    return st.selectbox(
+        rotulo,
+        ["Todos"] + list(opcoes),
+        index=0,
+        key=key,
+    )
 
 
 def slot_html(linha, vaos=None, grande=False):
@@ -928,17 +945,18 @@ with col_lateral:
         )
 
         status_opcoes = ["OCUPADA", "DISPONIVEL"]
-        status_selecionados = st.multiselect(
+        status_selecionado = selectbox_filtro(
             "Status",
             status_opcoes,
-            default=status_opcoes,
-            key="mapa_filtro_status",
+            "mapa_filtro_status_combo",
         )
-        df_filtrado = aplicar_filtro_multiselect(
-            df_filtrado,
-            "StatusMapa",
-            status_selecionados,
-        )
+        status_filtro = valor_combobox(status_selecionado)
+        if status_filtro is not None:
+            df_filtrado = aplicar_filtro_multiselect(
+                df_filtrado,
+                "StatusMapa",
+                status_filtro,
+            )
 
         st.markdown('<div class="map-side-label-title">Produto</div>', unsafe_allow_html=True)
 
@@ -964,12 +982,12 @@ with col_lateral:
             base_marca[base_marca["VisivelMapa"]],
             "Marca",
         )
-        marcas_selecionadas = st.multiselect(
+        marca_selecionada = selectbox_filtro(
             "Marca",
             marcas,
-            default=marcas,
-            key="mapa_filtro_marca",
+            "mapa_filtro_marca_combo",
         )
+        marcas_selecionadas = valor_combobox(marca_selecionada)
 
         base_tipo = aplicar_filtro_visual(
             df_filtrado,
@@ -990,12 +1008,12 @@ with col_lateral:
             base_tipo[base_tipo["VisivelMapa"]],
             "Tipo",
         )
-        tipos_selecionados = st.multiselect(
+        tipo_selecionado = selectbox_filtro(
             "Tipo",
             tipos,
-            default=tipos,
-            key="mapa_filtro_tipo",
+            "mapa_filtro_tipo_combo",
         )
+        tipos_selecionados = valor_combobox(tipo_selecionado)
 
         base_item = aplicar_filtro_visual(
             df_filtrado,
@@ -1022,12 +1040,12 @@ with col_lateral:
             base_item[base_item["VisivelMapa"]],
             "Grupo",
         )
-        grupos_selecionados = st.multiselect(
+        grupo_selecionado = selectbox_filtro(
             "Grupo",
             grupos,
-            default=grupos,
-            key="mapa_filtro_grupo",
+            "mapa_filtro_grupo_combo",
         )
+        grupos_selecionados = valor_combobox(grupo_selecionado)
 
         base_item = aplicar_filtro_visual(
             df_filtrado,
@@ -1058,12 +1076,12 @@ with col_lateral:
             base_item[base_item["VisivelMapa"]],
             "Item",
         )
-        itens_selecionados = st.multiselect(
+        item_selecionado = selectbox_filtro(
             "Item",
             itens,
-            default=itens,
-            key="mapa_filtro_item",
+            "mapa_filtro_item_combo",
         )
+        itens_selecionados = valor_combobox(item_selecionado)
 
         df_visual = aplicar_filtro_visual(
             df_filtrado,
