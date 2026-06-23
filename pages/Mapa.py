@@ -291,6 +291,10 @@ st.markdown(
         margin-bottom: .3cm;
     }
 
+    .map-block {
+        --rack-post-width: 5px;
+    }
+
     .map-legend-item {
         display: inline-flex;
         align-items: center;
@@ -480,8 +484,8 @@ st.markdown(
 
     .map-module-label {
         min-height: 28px;
-        border-left: 8px solid #4b5563;
-        border-right: 8px solid #4b5563;
+        border-left: var(--rack-post-width) solid #4b5563;
+        border-right: var(--rack-post-width) solid #4b5563;
         border-bottom: 2px solid #000000;
         background: #f8fafc;
     }
@@ -489,8 +493,8 @@ st.markdown(
     .map-bay {
         min-height: 48px;
         border: 2px solid #000000;
-        border-left: 8px solid #4b5563;
-        border-right: 8px solid #4b5563;
+        border-left: var(--rack-post-width) solid #4b5563;
+        border-right: var(--rack-post-width) solid #4b5563;
         border-bottom: 0;
         display: flex;
         gap: 4px;
@@ -508,8 +512,8 @@ st.markdown(
 
     .map-bay.missing {
         border-style: solid;
-        border-left: 8px solid #4b5563;
-        border-right: 8px solid #4b5563;
+        border-left: var(--rack-post-width) solid #4b5563;
+        border-right: var(--rack-post-width) solid #4b5563;
         background: #ffffff;
     }
 
