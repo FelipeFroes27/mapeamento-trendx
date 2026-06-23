@@ -234,15 +234,16 @@ def aplicar_filtro_multiselect(df, coluna, selecionados):
 def slot_html(linha, vaos=None, grande=False):
     status = str(linha["StatusMapa"]).lower()
     vaga = escape(str(linha["Vaga"]))
-    quantidade = escape(str(linha["Quantidade"]))
     itens = escape(str(linha["Itens"]))
     detalhes = escape(str(linha["Detalhes"]))
+    codigo = texto(linha.get("Codigo")).upper()
     vaos = vaos or [str(linha["Vao"])]
     vao_label = escape("+".join(str(vao) for vao in vaos))
     classe_grande = " grande" if grande else ""
     titulo = f"{vaga}\n{detalhes}"
 
-    conteudo = "SC" if bool(linha.get("EhSC", False)) else quantidade
+    conteudo = "SC" if bool(linha.get("EhSC", False)) else codigo
+    conteudo = escape(conteudo) if conteudo else "&nbsp;"
 
     return (
         f'<div class="map-slot {status}{classe_grande}" title="{titulo}">'
@@ -325,6 +326,37 @@ def slots_com_sc(df_celula, vaos_esperados):
             usados.add(indice)
 
     return slots
+
+
+def render_fora_padrao(df_fora_padrao):
+    if df_fora_padrao.empty:
+        return
+
+    linhas = []
+    for _, linha in df_fora_padrao.iterrows():
+        linhas.append(
+            "<tr>"
+            f"<td>{escape(texto(linha.get('Vaga')))}</td>"
+            f"<td>{escape(texto(linha.get('Status')))}</td>"
+            f"<td>{escape(texto(linha.get('Codigo')))}</td>"
+            f"<td>{escape(texto(linha.get('Descricao')))}</td>"
+            f"<td class=\"num\">{escape(texto(linha.get('Quantidade')))}</td>"
+            "</tr>"
+        )
+
+    st.markdown(
+        '<div class="map-invalid-card">'
+        '<div class="panel-title">Vagas fora do padrão</div>'
+        '<div class="panel-subtitle">Endereços que não seguem ZONA.RUA.LADO.MÓDULO.NÍVEL.VÃO.</div>'
+        '<div class="table-scroll">'
+        '<table class="mini-table">'
+        '<thead><tr><th>Vaga</th><th>Status</th><th>Código</th><th>Descrição</th><th class="num">Qtd</th></tr></thead>'
+        f'<tbody>{"".join(linhas)}</tbody>'
+        '</table>'
+        '</div>'
+        '</div>',
+        unsafe_allow_html=True,
+    )
 
 
 def render_mapa(df_vagas):
@@ -584,6 +616,15 @@ st.markdown(
         width: 100%;
     }
 
+    .map-invalid-card {
+        border: 2px solid #000000;
+        border-radius: 10px;
+        background: #ffffff;
+        padding: 12px;
+        margin-top: .3cm;
+        box-sizing: border-box;
+    }
+
     .map-block {
         border: 2px solid #000000;
         border-radius: 10px;
@@ -719,7 +760,11 @@ st.markdown(
     }
 
     .map-slot strong {
-        font-size: 13px;
+        max-width: 100%;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+        font-size: 11px;
         font-weight: 900;
     }
 
@@ -846,9 +891,5 @@ with col_mapa:
     render_mapa(df_filtrado)
 
 if not df_fora_padrao.empty:
-    with st.expander(f"Vagas fora do padrão ({len(df_fora_padrao)})"):
-        st.dataframe(
-            df_fora_padrao,
-            use_container_width=True,
-            hide_index=True,
-        )
+    with col_mapa:
+        render_fora_padrao(df_fora_padrao)
