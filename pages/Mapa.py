@@ -177,25 +177,20 @@ def render_mapa(df_vagas):
 
     blocos = []
     grupos = df_vagas.sort_values(
-        by=["Zona", "Rua", "Lado", "Modulo"],
+        by=["Zona", "Rua", "Lado", "Modulo", "Nivel", "Vao"],
         key=lambda serie: serie.map(numero_ordenacao),
-    ).groupby(["Zona", "Rua", "Lado", "Modulo"], sort=False)
+    ).groupby(["Zona", "Rua", "Lado"], sort=False)
 
-    for (zona, rua, lado, modulo), grupo in grupos:
+    for (zona, rua, lado), grupo in grupos:
+        modulos = sorted(
+            grupo["Modulo"].dropna().astype(str).unique(),
+            key=numero_ordenacao,
+        )
         niveis = sorted(
             grupo["Nivel"].dropna().astype(str).unique(),
             key=numero_ordenacao,
             reverse=True,
         )
-        vaos = sorted(
-            grupo["Vao"].dropna().astype(str).unique(),
-            key=numero_ordenacao,
-        )
-
-        celulas_por_vaga = {
-            str(linha["Nivel"]) + "|" + str(linha["Vao"]): linha
-            for _, linha in grupo.iterrows()
-        }
 
         linhas_html = []
         for nivel in niveis:
@@ -203,46 +198,58 @@ def render_mapa(df_vagas):
                 f'<div class="map-level-label">N{escape(str(nivel))}</div>'
             ]
 
-            for vao in vaos:
-                linha = celulas_por_vaga.get(str(nivel) + "|" + str(vao))
+            for modulo in modulos:
+                df_celula = grupo[
+                    (grupo["Modulo"].astype(str) == str(modulo))
+                    & (grupo["Nivel"].astype(str) == str(nivel))
+                ].sort_values("Vao", key=lambda serie: serie.map(numero_ordenacao))
 
-                if linha is None:
-                    celulas.append('<div class="map-slot missing"></div>')
+                if df_celula.empty:
+                    celulas.append('<div class="map-bay missing"></div>')
                     continue
 
-                status = str(linha["StatusMapa"]).lower()
-                vaga = escape(str(linha["Vaga"]))
-                quantidade = escape(str(linha["Quantidade"]))
-                itens = escape(str(linha["Itens"]))
-                detalhes = escape(str(linha["Detalhes"]))
+                subslots = []
+                for _, linha in df_celula.iterrows():
+                    status = str(linha["StatusMapa"]).lower()
+                    vaga = escape(str(linha["Vaga"]))
+                    quantidade = escape(str(linha["Quantidade"]))
+                    itens = escape(str(linha["Itens"]))
+                    detalhes = escape(str(linha["Detalhes"]))
+                    vao = escape(str(linha["Vao"]))
+
+                    subslots.append(
+                        f'<div class="map-slot {status}" title="{vaga}\n{detalhes}">'
+                        f'<span>{vao}</span>'
+                        f'<strong>{quantidade}</strong>'
+                        f'<small>{itens} item</small>'
+                        f'</div>'
+                    )
 
                 celulas.append(
-                    f'<div class="map-slot {status}" title="{vaga}\n{detalhes}">'
-                    f'<span>{escape(str(vao))}</span>'
-                    f'<strong>{quantidade}</strong>'
-                    f'<small>{itens} item</small>'
+                    f'<div class="map-bay">'
+                    f'{"".join(subslots)}'
                     f'</div>'
                 )
 
             linhas_html.append(
-                f'<div class="map-row" style="--map-columns:{len(vaos)};">'
+                f'<div class="map-row" style="--map-columns:{len(modulos)};">'
                 + "".join(celulas)
                 + '</div>'
             )
 
-        header_vaos = ''.join(
-            f'<div class="map-vao-label">{escape(str(vao))}</div>'
-            for vao in vaos
+        header_modulos = ''.join(
+            f'<div class="map-module-label">Módulo {escape(str(modulo))}</div>'
+            for modulo in modulos
         )
 
         blocos.append(
             f'<div class="map-block">'
             f'<div class="map-block-head">'
             f'<div class="panel-title">Zona {escape(str(zona))} | Rua {escape(str(rua))} | Lado {escape(str(lado))}</div>'
-            f'<div class="panel-subtitle">Modulo {escape(str(modulo))}</div>'
+            f'<div class="panel-subtitle">Porta-palete por módulos, níveis e vãos</div>'
             f'</div>'
-            f'<div class="map-header-row" style="--map-columns:{len(vaos)};">'
-            f'<div></div>{header_vaos}'
+            f'<div class="map-header-row" style="--map-columns:{len(modulos)};">'
+            f'<div></div>{header_modulos}'
             f'</div>'
             f'{"".join(linhas_html)}'
             f'</div>'
@@ -287,11 +294,11 @@ st.markdown(
     }
 
     .map-legend-swatch.occupied {
-        background: #111827;
+        background: #fecaca;
     }
 
     .map-legend-swatch.available {
-        background: #ffffff;
+        background: #bbf7d0;
     }
 
     .map-grid {
@@ -316,14 +323,14 @@ st.markdown(
     .map-header-row,
     .map-row {
         display: grid;
-        grid-template-columns: 44px repeat(var(--map-columns), minmax(56px, 1fr));
-        gap: 6px;
-        min-width: calc(44px + var(--map-columns) * 62px);
-        margin-bottom: 6px;
+        grid-template-columns: 48px repeat(var(--map-columns), minmax(104px, 1fr));
+        gap: 0;
+        min-width: calc(48px + var(--map-columns) * 112px);
+        margin-bottom: 0;
         align-items: stretch;
     }
 
-    .map-vao-label,
+    .map-module-label,
     .map-level-label {
         color: #000000;
         font-size: 12px;
@@ -336,39 +343,75 @@ st.markdown(
 
     .map-level-label {
         border: 2px solid #000000;
-        border-radius: 6px;
-        min-height: 48px;
+        border-right: 0;
+        border-bottom: 0;
+        border-radius: 0;
+        min-height: 54px;
         background: #ffffff;
     }
 
-    .map-slot {
-        min-height: 48px;
+    .map-header-row .map-level-label,
+    .map-header-row > div:first-child {
+        border: 0;
+        min-height: 28px;
+    }
+
+    .map-module-label {
+        min-height: 28px;
+        border-left: 8px solid #4b5563;
+        border-right: 8px solid #4b5563;
+        border-bottom: 2px solid #000000;
+        background: #f8fafc;
+    }
+
+    .map-bay {
+        min-height: 54px;
         border: 2px solid #000000;
-        border-radius: 6px;
-        display: grid;
-        grid-template-rows: auto auto auto;
+        border-left: 8px solid #4b5563;
+        border-right: 8px solid #4b5563;
+        border-bottom: 0;
+        display: flex;
+        gap: 4px;
         align-items: center;
-        justify-items: center;
-        padding: 5px 4px;
-        color: #000000;
+        justify-content: stretch;
+        padding: 4px;
         background: #ffffff;
         box-sizing: border-box;
     }
 
+    .map-row:last-child .map-level-label,
+    .map-row:last-child .map-bay {
+        border-bottom: 2px solid #000000;
+    }
+
+    .map-bay.missing {
+        border-style: solid;
+        border-left: 8px solid #d1d5db;
+        border-right: 8px solid #d1d5db;
+        background: #f3f4f6;
+    }
+
+    .map-slot {
+        flex: 1 1 0;
+        min-width: 38px;
+        min-height: 42px;
+        border: 1px solid #000000;
+        border-radius: 4px;
+        display: grid;
+        grid-template-rows: auto auto auto;
+        align-items: center;
+        justify-items: center;
+        padding: 4px 3px;
+        color: #000000;
+        box-sizing: border-box;
+    }
+
     .map-slot.ocupada {
-        background: #111827;
-        color: #ffffff;
+        background: #fecaca;
     }
 
     .map-slot.disponivel {
-        background: #ffffff;
-        color: #000000;
-    }
-
-    .map-slot.missing {
-        border-style: dashed;
-        border-color: #bbbbbb;
-        background: #f6f6f6;
+        background: #bbf7d0;
     }
 
     .map-slot span,
