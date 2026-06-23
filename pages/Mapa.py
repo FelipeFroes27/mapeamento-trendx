@@ -3,7 +3,7 @@ from html import escape
 import pandas as pd
 import streamlit as st
 
-from utils.dados import preparar_posicao, resumo_vagas
+from utils.dados import preparar_posicao
 from utils.sheets import ler_aba
 from utils.ui import preparar_pagina
 
@@ -160,14 +160,32 @@ def agregar_vagas(df_mapa):
     return pd.DataFrame(linhas, columns=COLUNAS_VAGAS)
 
 
-def card_metrica(rotulo, valor, nota):
+def card_lateral(rotulo, valor, nota):
     return (
-        f'<div class="kpi-card">'
-        f'<div class="kpi-label">{escape(str(rotulo))}</div>'
-        f'<div class="kpi-value">{escape(str(valor))}</div>'
-        f'<div class="kpi-note">{escape(str(nota))}</div>'
+        f'<div class="map-side-card">'
+        f'<div class="map-side-label">{escape(str(rotulo))}</div>'
+        f'<div class="map-side-value">{escape(str(valor))}</div>'
+        f'<div class="map-side-note">{escape(str(nota))}</div>'
         f'</div>'
     )
+
+
+def opcoes_multiselect(df, coluna):
+    if df.empty or coluna not in df.columns:
+        return []
+
+    return sorted(
+        valor
+        for valor in df[coluna].dropna().astype(str).str.strip().unique()
+        if valor
+    )
+
+
+def aplicar_filtro_multiselect(df, coluna, selecionados):
+    if not selecionados or df.empty or coluna not in df.columns:
+        return df.iloc[0:0].copy()
+
+    return df[df[coluna].astype(str).isin(selecionados)].copy()
 
 
 def render_mapa(df_vagas):
@@ -301,9 +319,82 @@ st.markdown(
         background: #bbf7d0;
     }
 
+    .st-key-mapa_lateral {
+        border: 2px solid #000000 !important;
+        border-radius: 8px !important;
+        background: #ffffff !important;
+        padding: 12px !important;
+        box-sizing: border-box;
+        align-self: flex-start !important;
+    }
+
+    .st-key-mapa_lateral div[data-testid="stMultiSelect"],
+    .st-key-mapa_lateral div[data-testid="stSelectbox"] {
+        margin-bottom: .3cm !important;
+    }
+
+    .st-key-mapa_lateral div[data-testid="stMultiSelect"] div[data-baseweb="select"] {
+        min-height: 43px !important;
+        max-height: 110px !important;
+        overflow-y: auto !important;
+        align-items: flex-start !important;
+        padding-top: 3px !important;
+        padding-bottom: 3px !important;
+    }
+
+    .st-key-mapa_atualizar_dados button {
+        min-height: 38px !important;
+        margin-bottom: .3cm !important;
+    }
+
+    .map-side-title {
+        margin: 0 0 .3cm 0;
+        color: #000000;
+        font-size: 18px;
+        line-height: 1.05;
+        font-weight: 900;
+    }
+
+    .map-side-label-title {
+        margin: 10px 0 6px 0;
+        color: #000000;
+        font-size: 13px;
+        font-weight: 900;
+    }
+
+    .map-side-card {
+        border: 2px solid #000000;
+        border-radius: 8px;
+        background: #ffffff;
+        padding: 8px 9px;
+        margin-bottom: .3cm;
+        box-sizing: border-box;
+    }
+
+    .map-side-label {
+        color: #111111;
+        font-size: 12px;
+        font-weight: 850;
+    }
+
+    .map-side-value {
+        margin-top: 4px;
+        color: #000000;
+        font-size: 24px;
+        line-height: 1;
+        font-weight: 900;
+    }
+
+    .map-side-note {
+        margin-top: 5px;
+        color: #333333;
+        font-size: 10px;
+        font-weight: 650;
+    }
+
     .map-grid {
-        display: grid;
-        grid-template-columns: repeat(2, minmax(0, 1fr));
+        display: flex;
+        flex-direction: column;
         gap: .3cm;
         align-items: start;
     }
@@ -437,8 +528,8 @@ st.markdown(
     }
 
     @media (max-width: 1100px) {
-        .map-grid {
-            grid-template-columns: 1fr;
+        .st-key-mapa_lateral {
+            margin-bottom: .3cm;
         }
     }
     </style>
@@ -449,59 +540,109 @@ st.markdown(
 
 df_posicao = carregar_dados_mapa()
 
-if st.button("Atualizar dados"):
-    st.cache_data.clear()
-    st.rerun()
-
 if df_posicao.empty:
     st.warning("Não há dados na aba POSIÇÃO.")
     st.stop()
 
 df_mapa, df_fora_padrao = preparar_mapa(df_posicao)
 df_vagas = agregar_vagas(df_mapa)
-resumo = resumo_vagas(df_posicao)
 
-st.markdown(
-    '<div class="metric-grid">'
-    + card_metrica("Vagas totais", resumo["total"], "Cadastradas em POSIÇÃO")
-    + card_metrica("Ocupadas", resumo["ocupadas"], "Com produto e saldo")
-    + card_metrica("Disponíveis", resumo["disponiveis"], "Sem produto em saldo")
-    + card_metrica("Itens alocados", resumo["itens"], "Linhas ocupadas")
-    + card_metrica("Saldo em peças", resumo["quantidade"], "Quantidade total")
-    + '</div>',
-    unsafe_allow_html=True,
+col_lateral, col_mapa = st.columns(
+    [1.25, 6.75],
+    gap="small",
+    vertical_alignment="top",
 )
 
-zonas = sorted(df_vagas["Zona"].dropna().astype(str).unique()) if not df_vagas.empty else []
-zona = st.selectbox("Zona", ["Todas"] + zonas)
+with col_lateral:
+    with st.container(key="mapa_lateral"):
+        st.markdown('<div class="map-side-title">Mapa</div>', unsafe_allow_html=True)
 
-df_filtrado = df_vagas.copy()
-if zona != "Todas":
-    df_filtrado = df_filtrado[df_filtrado["Zona"] == zona]
+        if st.button("Atualizar dados", key="mapa_atualizar_dados", use_container_width=True):
+            st.cache_data.clear()
+            st.rerun()
 
-ruas = sorted(df_filtrado["Rua"].dropna().astype(str).unique()) if not df_filtrado.empty else []
-rua = st.selectbox("Rua", ["Todas"] + ruas)
-if rua != "Todas":
-    df_filtrado = df_filtrado[df_filtrado["Rua"] == rua]
+        st.markdown('<div class="map-side-label-title">Filtros</div>', unsafe_allow_html=True)
 
-lados = sorted(df_filtrado["Lado"].dropna().astype(str).unique()) if not df_filtrado.empty else []
-lado = st.selectbox("Lado", ["Todos"] + lados)
-if lado != "Todos":
-    df_filtrado = df_filtrado[df_filtrado["Lado"] == lado]
+        zonas = opcoes_multiselect(df_vagas, "Zona")
+        zonas_selecionadas = st.multiselect(
+            "Zona",
+            zonas,
+            default=zonas,
+            key="mapa_filtro_zona",
+        )
 
-status = st.selectbox("Status", ["Todos", "OCUPADA", "DISPONIVEL"])
-if status != "Todos":
-    df_filtrado = df_filtrado[df_filtrado["StatusMapa"] == status]
+        df_filtrado = aplicar_filtro_multiselect(
+            df_vagas,
+            "Zona",
+            zonas_selecionadas,
+        )
 
-st.markdown(
-    '<div class="map-legend">'
-    '<div class="map-legend-item"><span class="map-legend-swatch occupied"></span>Ocupada</div>'
-    '<div class="map-legend-item"><span class="map-legend-swatch available"></span>Disponível</div>'
-    '</div>',
-    unsafe_allow_html=True,
-)
+        ruas = opcoes_multiselect(df_filtrado, "Rua")
+        ruas_selecionadas = st.multiselect(
+            "Rua",
+            ruas,
+            default=ruas,
+            key="mapa_filtro_rua",
+        )
+        df_filtrado = aplicar_filtro_multiselect(
+            df_filtrado,
+            "Rua",
+            ruas_selecionadas,
+        )
 
-render_mapa(df_filtrado)
+        lados = opcoes_multiselect(df_filtrado, "Lado")
+        lados_selecionados = st.multiselect(
+            "Lado",
+            lados,
+            default=lados,
+            key="mapa_filtro_lado",
+        )
+        df_filtrado = aplicar_filtro_multiselect(
+            df_filtrado,
+            "Lado",
+            lados_selecionados,
+        )
+
+        status_opcoes = ["OCUPADA", "DISPONIVEL"]
+        status_selecionados = st.multiselect(
+            "Status",
+            status_opcoes,
+            default=status_opcoes,
+            key="mapa_filtro_status",
+        )
+        df_filtrado = aplicar_filtro_multiselect(
+            df_filtrado,
+            "StatusMapa",
+            status_selecionados,
+        )
+
+        resumo_filtrado = {
+            "total": int(df_filtrado["Vaga"].nunique()) if not df_filtrado.empty else 0,
+            "ocupadas": int(df_filtrado[df_filtrado["StatusMapa"] == "OCUPADA"]["Vaga"].nunique()) if not df_filtrado.empty else 0,
+            "disponiveis": int(df_filtrado[df_filtrado["StatusMapa"] == "DISPONIVEL"]["Vaga"].nunique()) if not df_filtrado.empty else 0,
+            "itens": int(df_filtrado["Itens"].sum()) if not df_filtrado.empty else 0,
+            "quantidade": int(df_filtrado["Quantidade"].sum()) if not df_filtrado.empty else 0,
+        }
+
+        st.markdown('<div class="map-side-label-title">Resumo</div>', unsafe_allow_html=True)
+        st.markdown(
+            card_lateral("Vagas", resumo_filtrado["total"], "No filtro atual")
+            + card_lateral("Ocupadas", resumo_filtrado["ocupadas"], "Com produto e saldo")
+            + card_lateral("Disponíveis", resumo_filtrado["disponiveis"], "Sem produto em saldo")
+            + card_lateral("Saldo", resumo_filtrado["quantidade"], "Quantidade total"),
+            unsafe_allow_html=True,
+        )
+
+with col_mapa:
+    st.markdown(
+        '<div class="map-legend">'
+        '<div class="map-legend-item"><span class="map-legend-swatch occupied"></span>Ocupada</div>'
+        '<div class="map-legend-item"><span class="map-legend-swatch available"></span>Disponível</div>'
+        '</div>',
+        unsafe_allow_html=True,
+    )
+
+    render_mapa(df_filtrado)
 
 if not df_fora_padrao.empty:
     with st.expander(f"Vagas fora do padrão ({len(df_fora_padrao)})"):
