@@ -861,6 +861,7 @@ def render_menu_lateral():
         st.page_link("pages/Entrada.py", label="Entrada")
         st.page_link("pages/Saida.py", label="Saída")
         st.page_link("pages/Consulta.py", label="Consulta")
+        st.page_link("pages/Mapa.py", label="Mapa")
         st.page_link("pages/Indicadores.py", label="Indicadores")
 
 
