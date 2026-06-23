@@ -508,9 +508,9 @@ st.markdown(
 
     .map-bay.missing {
         border-style: solid;
-        border-left: 8px solid #d1d5db;
-        border-right: 8px solid #d1d5db;
-        background: #f3f4f6;
+        border-left: 8px solid #4b5563;
+        border-right: 8px solid #4b5563;
+        background: #ffffff;
     }
 
     .map-slot {
