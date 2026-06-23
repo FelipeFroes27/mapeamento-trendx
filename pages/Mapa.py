@@ -328,6 +328,34 @@ st.markdown(
         align-self: flex-start !important;
     }
 
+    .block-container,
+    [data-testid="stMainBlockContainer"] {
+        max-width: 1840px !important;
+        padding-left: 1.15rem !important;
+        padding-right: 1.15rem !important;
+        padding-top: .35rem !important;
+    }
+
+    .page-head {
+        max-width: 1840px;
+        margin-left: auto;
+        margin-right: auto;
+    }
+
+    .st-key-mapa_lateral [data-baseweb="tag"] {
+        max-width: 78px !important;
+        height: 28px !important;
+        margin: 2px 3px 2px 0 !important;
+        border-radius: 7px !important;
+    }
+
+    .st-key-mapa_lateral [data-baseweb="tag"] span {
+        max-width: 46px !important;
+        overflow: hidden !important;
+        text-overflow: ellipsis !important;
+        white-space: nowrap !important;
+    }
+
     .st-key-mapa_lateral div[data-testid="stMultiSelect"],
     .st-key-mapa_lateral div[data-testid="stSelectbox"] {
         margin-bottom: .3cm !important;
@@ -396,7 +424,8 @@ st.markdown(
         display: flex;
         flex-direction: column;
         gap: .3cm;
-        align-items: start;
+        align-items: stretch;
+        width: 100%;
     }
 
     .map-block {
@@ -405,6 +434,8 @@ st.markdown(
         background: #ffffff;
         padding: 12px;
         overflow-x: auto;
+        max-width: 100%;
+        box-sizing: border-box;
     }
 
     .map-block-head {
@@ -414,9 +445,9 @@ st.markdown(
     .map-header-row,
     .map-row {
         display: grid;
-        grid-template-columns: 48px repeat(var(--map-columns), minmax(104px, 1fr));
+        grid-template-columns: 42px repeat(var(--map-columns), minmax(86px, 1fr));
         gap: 0;
-        min-width: calc(48px + var(--map-columns) * 112px);
+        min-width: calc(42px + var(--map-columns) * 92px);
         margin-bottom: 0;
         align-items: stretch;
     }
@@ -437,7 +468,7 @@ st.markdown(
         border-right: 0;
         border-bottom: 0;
         border-radius: 0;
-        min-height: 54px;
+        min-height: 48px;
         background: #ffffff;
     }
 
@@ -456,7 +487,7 @@ st.markdown(
     }
 
     .map-bay {
-        min-height: 54px;
+        min-height: 48px;
         border: 2px solid #000000;
         border-left: 8px solid #4b5563;
         border-right: 8px solid #4b5563;
@@ -484,8 +515,8 @@ st.markdown(
 
     .map-slot {
         flex: 1 1 0;
-        min-width: 38px;
-        min-height: 42px;
+        min-width: 32px;
+        min-height: 36px;
         border: 1px solid #000000;
         border-radius: 4px;
         display: grid;
@@ -513,17 +544,17 @@ st.markdown(
     }
 
     .map-slot span {
-        font-size: 11px;
+        font-size: 10px;
         font-weight: 850;
     }
 
     .map-slot strong {
-        font-size: 15px;
+        font-size: 13px;
         font-weight: 900;
     }
 
     .map-slot small {
-        font-size: 9px;
+        font-size: 8px;
         font-weight: 750;
     }
 
@@ -548,7 +579,7 @@ df_mapa, df_fora_padrao = preparar_mapa(df_posicao)
 df_vagas = agregar_vagas(df_mapa)
 
 col_lateral, col_mapa = st.columns(
-    [1.25, 6.75],
+    [0.95, 7.05],
     gap="small",
     vertical_alignment="top",
 )
