@@ -311,9 +311,11 @@ def aplicar_layout():
             box-shadow: none !important;
         }
 
-        div[data-baseweb="input"],
-        div[data-baseweb="select"],
-        div[data-baseweb="textarea"] {
+        [data-testid="stTextInput"] div[data-baseweb="input"],
+        [data-testid="stNumberInput"] div[data-baseweb="input"],
+        [data-testid="stTextArea"] div[data-baseweb="textarea"],
+        [data-testid="stSelectbox"] div[data-baseweb="select"],
+        [data-testid="stMultiSelect"] div[data-baseweb="select"] {
             border: 2px solid #000000 !important;
             border-radius: 8px !important;
             background: #ffffff !important;
@@ -322,20 +324,61 @@ def aplicar_layout():
             overflow: hidden !important;
         }
 
-        div[data-baseweb="input"] > div,
-        div[data-baseweb="select"] > div,
-        div[data-baseweb="textarea"] > div,
-        div[data-baseweb="input"] input,
-        div[data-baseweb="select"] input,
-        div[data-baseweb="textarea"] textarea,
-        input,
-        textarea {
+        [data-testid="stTextInput"] div[data-baseweb="input"]:focus-within,
+        [data-testid="stNumberInput"] div[data-baseweb="input"]:focus-within,
+        [data-testid="stTextArea"] div[data-baseweb="textarea"]:focus-within,
+        [data-testid="stSelectbox"] div[data-baseweb="select"]:focus-within,
+        [data-testid="stMultiSelect"] div[data-baseweb="select"]:focus-within {
+            border: 2px solid #000000 !important;
+            border-radius: 8px !important;
+            outline: 0 !important;
+            box-shadow: none !important;
+        }
+
+        [data-testid="stTextInput"] div[data-baseweb="input"] *,
+        [data-testid="stNumberInput"] div[data-baseweb="input"] *,
+        [data-testid="stTextArea"] div[data-baseweb="textarea"] *,
+        [data-testid="stSelectbox"] div[data-baseweb="select"] *,
+        [data-testid="stMultiSelect"] div[data-baseweb="select"] * {
             border: 0 !important;
             outline: 0 !important;
             box-shadow: none !important;
             background: transparent !important;
             color: #000000 !important;
             border-radius: 0 !important;
+        }
+
+        [data-testid="stTextInput"] div[data-baseweb="input"] div[data-baseweb="input"],
+        [data-testid="stNumberInput"] div[data-baseweb="input"] div[data-baseweb="input"],
+        [data-testid="stSelectbox"] div[data-baseweb="select"] div[data-baseweb="select"],
+        [data-testid="stMultiSelect"] div[data-baseweb="select"] div[data-baseweb="select"],
+        [data-testid="stTextArea"] div[data-baseweb="textarea"] div[data-baseweb="textarea"] {
+            border: 0 !important;
+            outline: 0 !important;
+            box-shadow: none !important;
+            background: transparent !important;
+        }
+
+        [data-testid="stTextInput"] input,
+        [data-testid="stNumberInput"] input,
+        [data-testid="stTextArea"] textarea,
+        [data-testid="stSelectbox"] input,
+        [data-testid="stMultiSelect"] input {
+            -webkit-text-fill-color: #000000 !important;
+            opacity: 1 !important;
+        }
+
+        [data-testid="stNumberInput"] button {
+            border: 0 !important;
+            border-left: 1px solid #000000 !important;
+            border-radius: 0 !important;
+            background: transparent !important;
+            box-shadow: none !important;
+            color: #000000 !important;
+        }
+
+        [data-testid="stNumberInput"] button:first-of-type {
+            border-left: 0 !important;
         }
 
         .stButton > button {

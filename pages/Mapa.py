@@ -708,21 +708,6 @@ st.markdown(
     .st-key-mapa_topo_filtros div[data-testid="stTextInput"] div[data-baseweb="input"] {
         min-height: 44px !important;
         height: 44px !important;
-        border: 2px solid #000000 !important;
-        border-radius: 8px !important;
-        box-shadow: none !important;
-        background: #ffffff !important;
-        overflow: hidden !important;
-    }
-
-    .st-key-mapa_topo_filtros div[data-testid="stTextInput"] div[data-baseweb="input"] > div,
-    .st-key-mapa_topo_filtros div[data-testid="stTextInput"] div[data-baseweb="base-input"],
-    .st-key-mapa_topo_filtros div[data-testid="stTextInput"] input {
-        border: 0 !important;
-        outline: 0 !important;
-        box-shadow: none !important;
-        border-radius: 0 !important;
-        background: transparent !important;
     }
 
     .st-key-mapa_topo_filtros input {
