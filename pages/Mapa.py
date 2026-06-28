@@ -4,6 +4,7 @@ from html import escape
 
 import pandas as pd
 import streamlit as st
+from gspread.exceptions import WorksheetNotFound
 
 from utils.dados import preparar_posicao
 from utils.sheets import ler_aba
@@ -30,7 +31,23 @@ def carregar_dados_mapa():
     bd = pd.DataFrame(
         ler_aba("Mapeamento Trendx", "BD PRODUTOS")
     )
-    return posicao, bd
+    pedidos = ler_aba_opcional(
+        "Mapeamento Trendx",
+        ["PEDIDOS", "Pedidos", "pedidos"],
+    )
+    return posicao, bd, pedidos
+
+
+def ler_aba_opcional(nome_planilha, nomes_abas):
+    for nome_aba in nomes_abas:
+        try:
+            return pd.DataFrame(
+                ler_aba(nome_planilha, nome_aba)
+            )
+        except WorksheetNotFound:
+            continue
+
+    return pd.DataFrame()
 
 
 def texto(valor):
@@ -60,8 +77,24 @@ def normalizar_nome_coluna(coluna):
 
 def valor_campo(linha, campo):
     alvos = {
-        "codigo": {"codigo", "cdigo"},
-        "descricao": {"descricao", "descrio"},
+        "pedido": {"pedido", "npedido", "numeropedido", "numpedido"},
+        "codigo": {
+            "codigo",
+            "cdigo",
+            "cod",
+            "codproduto",
+            "codigoproduto",
+            "coditem",
+            "codigodoitem",
+        },
+        "descricao": {
+            "descricao",
+            "descrio",
+            "produto",
+            "item",
+            "descricaoitem",
+            "descricaoproduto",
+        },
         "categoria": {"categoria"},
         "tipo": {"tipo"},
         "marca": {"marca"},
@@ -98,6 +131,71 @@ def preparar_bd_mapa(df_bd):
         }
 
     return mapa
+
+
+def preparar_pedidos_mapa(df_pedidos):
+    if df_pedidos.empty:
+        return pd.DataFrame(columns=["Pedido", "Codigo", "Descricao"])
+
+    registros = []
+    for _, linha in df_pedidos.iterrows():
+        pedido = texto(valor_campo(linha, "pedido")).upper()
+        codigo = texto(valor_campo(linha, "codigo")).upper()
+        descricao = texto(valor_campo(linha, "descricao"))
+
+        if not pedido or not codigo:
+            continue
+
+        registros.append(
+            {
+                "Pedido": pedido,
+                "Codigo": codigo,
+                "Descricao": descricao,
+            }
+        )
+
+    return pd.DataFrame(registros, columns=["Pedido", "Codigo", "Descricao"])
+
+
+def codigos_do_pedido(df_pedidos, pedido):
+    pedido = texto(pedido).upper()
+    if not pedido or df_pedidos.empty:
+        return []
+
+    codigos = (
+        df_pedidos[df_pedidos["Pedido"].astype(str).str.upper() == pedido]["Codigo"]
+        .dropna()
+        .astype(str)
+        .str.strip()
+        .str.upper()
+        .tolist()
+    )
+    return list(dict.fromkeys(codigo for codigo in codigos if codigo))
+
+
+def descricao_por_codigo(codigo, bd_produtos, df_vagas, df_pedidos):
+    codigo = texto(codigo).upper()
+    if not codigo:
+        return ""
+
+    if codigo in bd_produtos:
+        descricao = texto(bd_produtos[codigo].get("Item"))
+        if descricao:
+            return descricao
+
+    for df, coluna in ((df_vagas, "Descricao"), (df_pedidos, "Descricao")):
+        if df.empty or "Codigo" not in df.columns or coluna not in df.columns:
+            continue
+
+        encontrados = df[
+            df["Codigo"].fillna("").astype(str).str.strip().str.upper() == codigo
+        ]
+        if not encontrados.empty:
+            descricao = texto(encontrados.iloc[0].get(coluna))
+            if descricao:
+                return descricao
+
+    return ""
 
 
 def numero_ordenacao(valor):
@@ -294,6 +392,39 @@ def aplicar_filtro_visual(df, filtros):
             mascara = pd.Series(False, index=df.index)
             break
         mascara = mascara & df[coluna].fillna("").astype(str).isin(selecionados)
+
+    df["VisivelMapa"] = mascara
+    return df
+
+
+def aplicar_filtros_topo(df, codigos_pedido=None, codigo="", descricao=""):
+    df = df.copy()
+
+    if df.empty:
+        df["VisivelMapa"] = False
+        return df
+
+    if "VisivelMapa" not in df.columns:
+        df["VisivelMapa"] = True
+
+    mascara = df["VisivelMapa"].fillna(False).astype(bool)
+    codigos_pedido = codigos_pedido or None
+    codigo = texto(codigo).upper()
+    descricao = texto(descricao).upper()
+
+    if codigos_pedido is not None:
+        codigos_pedido = [texto(item).upper() for item in codigos_pedido if texto(item)]
+        mascara = mascara & df["Codigo"].fillna("").astype(str).str.upper().isin(codigos_pedido)
+
+    if codigo:
+        mascara = mascara & (df["Codigo"].fillna("").astype(str).str.upper() == codigo)
+    elif descricao:
+        descricao_posicao = df["Descricao"].fillna("").astype(str).str.upper()
+        descricao_item = df["Item"].fillna("").astype(str).str.upper()
+        mascara = mascara & (
+            descricao_posicao.str.contains(re.escape(descricao), na=False)
+            | descricao_item.str.contains(re.escape(descricao), na=False)
+        )
 
     df["VisivelMapa"] = mascara
     return df
@@ -545,7 +676,15 @@ st.markdown(
         display: flex;
         flex-wrap: wrap;
         gap: .3cm;
+        margin-bottom: 0;
+    }
+
+    .st-key-mapa_topo_filtros {
         margin-bottom: .3cm;
+    }
+
+    .st-key-mapa_topo_filtros div[data-testid="stTextInput"] {
+        margin-bottom: 0 !important;
     }
 
     .map-block {
@@ -878,7 +1017,7 @@ st.markdown(
 )
 
 
-df_posicao, df_bd = carregar_dados_mapa()
+df_posicao, df_bd, df_pedidos = carregar_dados_mapa()
 
 if df_posicao.empty:
     st.warning("Não há dados na aba POSIÇÃO.")
@@ -886,6 +1025,7 @@ if df_posicao.empty:
 
 df_mapa, df_fora_padrao = preparar_mapa(df_posicao)
 bd_produtos = preparar_bd_mapa(df_bd)
+df_pedidos = preparar_pedidos_mapa(df_pedidos)
 df_vagas = agregar_vagas(df_mapa, bd_produtos)
 
 col_lateral, col_mapa = st.columns(
@@ -1047,7 +1187,7 @@ with col_lateral:
         )
         grupos_selecionados = valor_combobox(grupo_selecionado)
 
-        base_item = aplicar_filtro_visual(
+        df_visual_base = aplicar_filtro_visual(
             df_filtrado,
             {
                 "Categoria": filtro_produto(
@@ -1072,57 +1212,104 @@ with col_lateral:
                 ),
             },
         )
-        itens = opcoes_multiselect(
-            base_item[base_item["VisivelMapa"]],
-            "Item",
-        )
-        item_selecionado = selectbox_filtro(
-            "Item",
-            itens,
-            "mapa_filtro_item_combo",
-        )
-        itens_selecionados = valor_combobox(item_selecionado)
-
-        df_visual = aplicar_filtro_visual(
-            df_filtrado,
-            {
-                "Categoria": filtro_produto(
-                    "Categoria",
-                    categorias_selecionadas,
-                    categorias,
-                ),
-                "Marca": filtro_produto(
-                    "Marca",
-                    marcas_selecionadas,
-                    marcas,
-                ),
-                "Tipo": filtro_produto(
-                    "Tipo",
-                    tipos_selecionados,
-                    tipos,
-                ),
-                "Grupo": filtro_produto(
-                    "Grupo",
-                    grupos_selecionados,
-                    grupos,
-                ),
-                "Item": filtro_produto(
-                    "Item",
-                    itens_selecionados,
-                    itens,
-                ),
-            },
+with col_mapa:
+    with st.container(key="mapa_topo_filtros"):
+        col_legenda, col_pedido, col_codigo, col_descricao = st.columns(
+            [1.25, 0.95, 0.95, 1.85],
+            gap="small",
+            vertical_alignment="bottom",
         )
 
-        df_visivel = df_visual[df_visual["VisivelMapa"]] if not df_visual.empty else df_visual
-        resumo_filtrado = {
-            "total": int(df_visivel["Vaga"].nunique()) if not df_visivel.empty else 0,
-            "ocupadas": int(df_visivel[df_visivel["StatusMapa"] == "OCUPADA"]["Vaga"].nunique()) if not df_visivel.empty else 0,
-            "disponiveis": int(df_visivel[df_visivel["StatusMapa"] == "DISPONIVEL"]["Vaga"].nunique()) if not df_visivel.empty else 0,
-            "itens": int(df_visivel["Itens"].sum()) if not df_visivel.empty else 0,
-            "quantidade": int(df_visivel["Quantidade"].sum()) if not df_visivel.empty else 0,
-        }
+        with col_legenda:
+            st.markdown(
+                '<div class="map-legend">'
+                '<div class="map-legend-item"><span class="map-legend-swatch occupied"></span>Ocupada</div>'
+                '<div class="map-legend-item"><span class="map-legend-swatch available"></span>Disponível</div>'
+                '</div>',
+                unsafe_allow_html=True,
+            )
 
+        with col_pedido:
+            pedido_digitado = texto(
+                st.text_input(
+                    "Pedido",
+                    key="mapa_filtro_pedido_topo",
+                    placeholder="Digite o pedido",
+                )
+            ).upper()
+
+        with col_codigo:
+            codigo_digitado = texto(
+                st.text_input(
+                    "Código do item",
+                    key="mapa_filtro_codigo_topo",
+                    placeholder="Bipe ou digite",
+                )
+            ).upper()
+
+        descricao_codigo = descricao_por_codigo(
+            codigo_digitado,
+            bd_produtos,
+            df_vagas,
+            df_pedidos,
+        )
+        if codigo_digitado and descricao_codigo:
+            origem_descricao = st.session_state.get("_mapa_codigo_descricao_origem")
+            if origem_descricao != codigo_digitado:
+                st.session_state["mapa_filtro_descricao_topo"] = descricao_codigo
+                st.session_state["_mapa_codigo_descricao_origem"] = codigo_digitado
+        elif not codigo_digitado and st.session_state.get("_mapa_codigo_descricao_origem"):
+            st.session_state["mapa_filtro_descricao_topo"] = ""
+            st.session_state.pop("_mapa_codigo_descricao_origem", None)
+
+        with col_descricao:
+            descricao_digitada = texto(
+                st.text_input(
+                    "Descrição",
+                    key="mapa_filtro_descricao_topo",
+                    placeholder="Digite uma descrição",
+                )
+            )
+
+    codigos_pedido = None
+    if pedido_digitado:
+        codigos_pedido = codigos_do_pedido(
+            df_pedidos,
+            pedido_digitado,
+        )
+        if not codigos_pedido:
+            st.warning("Pedido não encontrado.")
+            codigos_pedido = []
+        else:
+            codigos_estoque = set(
+                df_vagas["Codigo"].dropna().astype(str).str.strip().str.upper()
+            )
+            itens_nao_encontrados = [
+                codigo
+                for codigo in codigos_pedido
+                if codigo not in codigos_estoque
+            ]
+            if itens_nao_encontrados:
+                st.warning(f"{len(itens_nao_encontrados)} itens não foram encontrados.")
+
+    df_visual = aplicar_filtros_topo(
+        df_visual_base,
+        codigos_pedido=codigos_pedido,
+        codigo=codigo_digitado,
+        descricao="" if codigo_digitado else descricao_digitada,
+    )
+
+df_visivel = df_visual[df_visual["VisivelMapa"]] if not df_visual.empty else df_visual
+resumo_filtrado = {
+    "total": int(df_visivel["Vaga"].nunique()) if not df_visivel.empty else 0,
+    "ocupadas": int(df_visivel[df_visivel["StatusMapa"] == "OCUPADA"]["Vaga"].nunique()) if not df_visivel.empty else 0,
+    "disponiveis": int(df_visivel[df_visivel["StatusMapa"] == "DISPONIVEL"]["Vaga"].nunique()) if not df_visivel.empty else 0,
+    "itens": int(df_visivel["Itens"].sum()) if not df_visivel.empty else 0,
+    "quantidade": int(df_visivel["Quantidade"].sum()) if not df_visivel.empty else 0,
+}
+
+with col_lateral:
+    with st.container(key="mapa_lateral_resumo"):
         st.markdown('<div class="map-side-label-title">Resumo</div>', unsafe_allow_html=True)
         st.markdown(
             card_lateral("Vagas", resumo_filtrado["total"], "No filtro atual")
@@ -1131,15 +1318,8 @@ with col_lateral:
             + card_lateral("Saldo", resumo_filtrado["quantidade"], "Quantidade total"),
             unsafe_allow_html=True,
         )
-with col_mapa:
-    st.markdown(
-        '<div class="map-legend">'
-        '<div class="map-legend-item"><span class="map-legend-swatch occupied"></span>Ocupada</div>'
-        '<div class="map-legend-item"><span class="map-legend-swatch available"></span>Disponível</div>'
-        '</div>',
-        unsafe_allow_html=True,
-    )
 
+with col_mapa:
     render_mapa(df_visual)
 
 if not df_fora_padrao.empty:
