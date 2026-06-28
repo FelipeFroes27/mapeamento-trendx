@@ -686,6 +686,7 @@ st.markdown(
         align-items: center;
         margin-bottom: 0;
         margin-top: 27px;
+        min-width: 282px;
     }
 
     .st-key-mapa_topo_filtros {
@@ -716,6 +717,10 @@ st.markdown(
     .st-key-mapa_topo_filtros div[data-baseweb="base-input"] {
         min-height: 44px !important;
         height: 44px !important;
+        border: 2px solid #000000 !important;
+        border-radius: 8px !important;
+        box-shadow: none !important;
+        background: #ffffff !important;
     }
 
     .map-block {
@@ -1249,7 +1254,7 @@ with col_lateral:
 with col_mapa:
     with st.container(key="mapa_topo_filtros"):
         col_legenda, col_pedido, col_codigo, col_descricao = st.columns(
-            [0.9, 1.12, 1.12, 2.5],
+            [1.25, 1.05, 1.05, 2.35],
             gap="small",
             vertical_alignment="top",
         )
