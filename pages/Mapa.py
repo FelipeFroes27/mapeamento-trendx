@@ -685,12 +685,12 @@ st.markdown(
         gap: 8px;
         align-items: center;
         margin-bottom: 0;
-        margin-top: 28px;
+        margin-top: 27px;
     }
 
     .st-key-mapa_topo_filtros {
         align-items: flex-start !important;
-        margin-bottom: .3cm;
+        margin-bottom: 9px;
     }
 
     .st-key-mapa_topo_filtros div[data-testid="stTextInput"] {
@@ -705,7 +705,17 @@ st.markdown(
     }
 
     .st-key-mapa_topo_filtros input {
-        height: 42px !important;
+        height: 44px !important;
+        min-height: 44px !important;
+        line-height: 44px !important;
+        padding-top: 0 !important;
+        padding-bottom: 0 !important;
+    }
+
+    .st-key-mapa_topo_filtros div[data-baseweb="input"],
+    .st-key-mapa_topo_filtros div[data-baseweb="base-input"] {
+        min-height: 44px !important;
+        height: 44px !important;
     }
 
     .map-block {
@@ -718,7 +728,8 @@ st.markdown(
         gap: 8px;
         border: 2px solid #000000;
         border-radius: 8px;
-        min-height: 42px;
+        min-height: 44px;
+        height: 44px;
         padding: 0 10px;
         background: #ffffff;
         color: #000000;
@@ -1238,7 +1249,7 @@ with col_lateral:
 with col_mapa:
     with st.container(key="mapa_topo_filtros"):
         col_legenda, col_pedido, col_codigo, col_descricao = st.columns(
-            [1.15, 1.1, 1.1, 2.25],
+            [0.9, 1.12, 1.12, 2.5],
             gap="small",
             vertical_alignment="top",
         )

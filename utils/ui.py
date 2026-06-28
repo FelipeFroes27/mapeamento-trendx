@@ -945,7 +945,7 @@ def render_cabecalho(titulo, subtitulo=""):
     subtitulo_html = f"<p>{escape(str(subtitulo))}</p>" if subtitulo else ""
 
     coluna_titulo, coluna_espaco, coluna_trendx, coluna_goper = st.columns(
-        [0.76, 0.12, 0.075, 0.045],
+        [0.79, 0.125, 0.055, 0.03],
         gap="small",
         vertical_alignment="center",
     )
