@@ -944,8 +944,9 @@ def render_cabecalho(titulo, subtitulo=""):
     titulo_html = escape(str(titulo))
     subtitulo_html = f"<p>{escape(str(subtitulo))}</p>" if subtitulo else ""
 
-    coluna_titulo, coluna_logos = st.columns(
-        [0.78, 0.22],
+    coluna_titulo, coluna_espaco, coluna_trendx, coluna_goper = st.columns(
+        [0.76, 0.12, 0.075, 0.045],
+        gap="small",
         vertical_alignment="center",
     )
 
@@ -960,18 +961,13 @@ def render_cabecalho(titulo, subtitulo=""):
             unsafe_allow_html=True,
         )
 
-    with coluna_logos:
-        logo_cols = st.columns(
-            [0.72, 0.28],
-            gap="small",
-            vertical_alignment="center",
-        )
-        with logo_cols[0]:
-            if Path(LOGO_BRANCO).exists():
-                st.image(LOGO_BRANCO, width=104)
-        with logo_cols[1]:
-            if Path(LOGO_PRETO).exists():
-                st.image(LOGO_PRETO, width=34)
+    with coluna_trendx:
+        if Path(LOGO_BRANCO).exists():
+            st.image(LOGO_BRANCO, width=104)
+
+    with coluna_goper:
+        if Path(LOGO_PRETO).exists():
+            st.image(LOGO_PRETO, width=34)
 
 
 def preparar_pagina(titulo, subtitulo="", mobile=False, pagina=None):
