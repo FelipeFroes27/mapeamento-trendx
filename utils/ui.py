@@ -210,7 +210,7 @@ def aplicar_layout():
             align-items: center;
             padding: 28px;
             border: 2px solid #000000;
-            border-radius: 22px;
+            border-radius: 8px;
             background: #ffffff;
         }
 
@@ -234,10 +234,13 @@ def aplicar_layout():
         .home-panel,
         .panel,
         .kpi-card,
+        .chart-panel,
+        .mobile-card,
+        .insight,
         div[data-testid="stDataFrame"],
         div[data-testid="stTable"] {
             border: 2px solid #000000;
-            border-radius: 12px;
+            border-radius: 8px;
             background: #ffffff;
             box-shadow: none;
             overflow: hidden;
@@ -283,7 +286,7 @@ def aplicar_layout():
             display: block;
             padding: 12px 14px;
             margin-top: 10px;
-            border-radius: 7px;
+            border-radius: 8px;
             border: 2px solid #000000;
             background: #ffffff;
             color: #000000;
@@ -300,17 +303,39 @@ def aplicar_layout():
         }
 
         .stButton > button,
-        div[data-baseweb="select"] > div,
-        div[data-baseweb="input"] > div,
-        div[data-baseweb="textarea"] > div,
-        div[data-baseweb="radio"] > div,
-        input,
-        textarea {
+        div[data-baseweb="radio"] > div {
             border: 2px solid #000000 !important;
             background: #ffffff !important;
             color: #000000 !important;
-            border-radius: 7px !important;
+            border-radius: 8px !important;
             box-shadow: none !important;
+        }
+
+        div[data-baseweb="input"],
+        div[data-baseweb="select"],
+        div[data-baseweb="textarea"] {
+            border: 2px solid #000000 !important;
+            border-radius: 8px !important;
+            background: #ffffff !important;
+            color: #000000 !important;
+            box-shadow: none !important;
+            overflow: hidden !important;
+        }
+
+        div[data-baseweb="input"] > div,
+        div[data-baseweb="select"] > div,
+        div[data-baseweb="textarea"] > div,
+        div[data-baseweb="input"] input,
+        div[data-baseweb="select"] input,
+        div[data-baseweb="textarea"] textarea,
+        input,
+        textarea {
+            border: 0 !important;
+            outline: 0 !important;
+            box-shadow: none !important;
+            background: transparent !important;
+            color: #000000 !important;
+            border-radius: 0 !important;
         }
 
         .stButton > button {
@@ -331,7 +356,7 @@ def aplicar_layout():
 
         [data-testid="stRadio"] [role="radiogroup"] {
             border: 2px solid #000000 !important;
-            border-radius: 10px !important;
+            border-radius: 8px !important;
             background: #ffffff !important;
             padding: 10px 12px !important;
         }
@@ -385,7 +410,7 @@ def aplicar_layout():
 
         [data-testid="stAlert"] {
             border: 2px solid #000000 !important;
-            border-radius: 10px !important;
+            border-radius: 8px !important;
         }
 
         [data-testid="stAlert"] *,
@@ -578,7 +603,7 @@ def aplicar_layout():
             border-collapse: collapse;
             overflow: hidden;
             border: 2px solid #000000;
-            border-radius: 12px;
+            border-radius: 8px;
             font-size: 13px;
         }
 
@@ -607,7 +632,7 @@ def aplicar_layout():
             max-height: 520px;
             overflow: auto;
             border: 2px solid #000000;
-            border-radius: 12px;
+            border-radius: 8px;
         }
 
         .table-scroll .mini-table {
@@ -629,7 +654,7 @@ def aplicar_layout():
 
         .insight {
             border: 2px solid #000000;
-            border-radius: 12px;
+            border-radius: 8px;
             padding: 14px;
             background: #ffffff;
         }
@@ -653,7 +678,7 @@ def aplicar_layout():
 
         .mobile-card {
             border: 2px solid #000000;
-            border-radius: 10px;
+            border-radius: 8px;
             background: #ffffff;
             padding: 12px;
             margin-bottom: .3cm;
@@ -754,7 +779,7 @@ def aplicar_layout_mobile():
         .home-hero {
             min-height: auto;
             padding: 16px;
-            border-radius: 12px;
+            border-radius: 8px;
             gap: 14px;
         }
 
@@ -770,7 +795,7 @@ def aplicar_layout_mobile():
 
         .home-panel {
             padding: 12px;
-            border-radius: 10px;
+            border-radius: 8px;
         }
 
         [data-testid="stSidebar"] {
@@ -810,7 +835,7 @@ def aplicar_layout_mobile():
         .panel,
         .chart-panel {
             padding: 12px;
-            border-radius: 10px;
+            border-radius: 8px;
         }
 
         .kpi-value {

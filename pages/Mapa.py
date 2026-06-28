@@ -795,7 +795,7 @@ st.markdown(
         max-width: 78px !important;
         height: 28px !important;
         margin: 2px 3px 2px 0 !important;
-        border-radius: 7px !important;
+        border-radius: 8px !important;
     }
 
     .st-key-mapa_lateral [data-baseweb="tag"] span {
@@ -900,7 +900,7 @@ st.markdown(
 
     .map-invalid-card {
         border: 2px solid #000000;
-        border-radius: 10px;
+        border-radius: 8px;
         background: #ffffff;
         padding: 12px;
         margin-top: .3cm;
@@ -909,7 +909,7 @@ st.markdown(
 
     .map-block {
         border: 2px solid #000000;
-        border-radius: 10px;
+        border-radius: 8px;
         background: #ffffff;
         padding: 12px;
         overflow-x: auto;
