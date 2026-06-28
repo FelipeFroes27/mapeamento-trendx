@@ -944,7 +944,10 @@ def render_cabecalho(titulo, subtitulo=""):
     titulo_html = escape(str(titulo))
     subtitulo_html = f"<p>{escape(str(subtitulo))}</p>" if subtitulo else ""
 
-    coluna_titulo, coluna_logos = st.columns([0.78, 0.22])
+    coluna_titulo, coluna_logos = st.columns(
+        [0.78, 0.22],
+        vertical_alignment="center",
+    )
 
     with coluna_titulo:
         st.markdown(
@@ -958,7 +961,11 @@ def render_cabecalho(titulo, subtitulo=""):
         )
 
     with coluna_logos:
-        logo_cols = st.columns([0.72, 0.28], gap="small")
+        logo_cols = st.columns(
+            [0.72, 0.28],
+            gap="small",
+            vertical_alignment="center",
+        )
         with logo_cols[0]:
             if Path(LOGO_BRANCO).exists():
                 st.image(LOGO_BRANCO, width=104)

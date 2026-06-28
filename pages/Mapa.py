@@ -77,7 +77,14 @@ def normalizar_nome_coluna(coluna):
 
 def valor_campo(linha, campo):
     alvos = {
-        "pedido": {"pedido", "npedido", "numeropedido", "numpedido"},
+        "pedido": {
+            "pedido",
+            "npedido",
+            "numeropedido",
+            "numerodopedido",
+            "numpedido",
+            "numdopedido",
+        },
         "codigo": {
             "codigo",
             "cdigo",
@@ -676,15 +683,25 @@ st.markdown(
         display: flex;
         flex-wrap: wrap;
         gap: .3cm;
+        align-items: center;
         margin-bottom: 0;
+        margin-top: 30px;
     }
 
     .st-key-mapa_topo_filtros {
+        align-items: flex-start !important;
         margin-bottom: .3cm;
     }
 
     .st-key-mapa_topo_filtros div[data-testid="stTextInput"] {
         margin-bottom: 0 !important;
+    }
+
+    .st-key-mapa_topo_filtros label {
+        color: #000000 !important;
+        font-size: 13px !important;
+        font-weight: 850 !important;
+        margin-bottom: 5px !important;
     }
 
     .map-block {
@@ -1217,7 +1234,7 @@ with col_mapa:
         col_legenda, col_pedido, col_codigo, col_descricao = st.columns(
             [1.25, 0.95, 0.95, 1.85],
             gap="small",
-            vertical_alignment="bottom",
+            vertical_alignment="top",
         )
 
         with col_legenda:
