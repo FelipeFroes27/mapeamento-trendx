@@ -718,6 +718,12 @@ st.markdown(
         padding-bottom: 0 !important;
     }
 
+    .st-key-mapa_botao_buscar_topo button {
+        min-height: 44px !important;
+        height: 44px !important;
+        margin-top: 27px !important;
+    }
+
     .map-block {
         --rack-post-width: 5px;
     }
@@ -1248,8 +1254,8 @@ with col_lateral:
         )
 with col_mapa:
     with st.container(key="mapa_topo_filtros"):
-        col_legenda, col_pedido, col_codigo, col_descricao = st.columns(
-            [1.25, 1.05, 1.05, 2.35],
+        col_legenda, col_pedido, col_codigo, col_descricao, col_buscar = st.columns(
+            [1.25, 1.0, 1.0, 2.15, 0.72],
             gap="small",
             vertical_alignment="top",
         )
@@ -1305,11 +1311,33 @@ with col_mapa:
                 )
             )
 
+        with col_buscar:
+            buscar_topo = st.button(
+                "Buscar",
+                key="mapa_botao_buscar_topo",
+                use_container_width=True,
+            )
+
+        if buscar_topo:
+            st.session_state["mapa_pedido_aplicado"] = pedido_digitado
+            st.session_state["mapa_codigo_aplicado"] = codigo_digitado
+            st.session_state["mapa_descricao_aplicada"] = descricao_digitada
+
+    pedido_aplicado = texto(
+        st.session_state.get("mapa_pedido_aplicado", "")
+    ).upper()
+    codigo_aplicado = texto(
+        st.session_state.get("mapa_codigo_aplicado", "")
+    ).upper()
+    descricao_aplicada = texto(
+        st.session_state.get("mapa_descricao_aplicada", "")
+    )
+
     codigos_pedido = None
-    if pedido_digitado:
+    if pedido_aplicado:
         codigos_pedido = codigos_do_pedido(
             df_pedidos,
-            pedido_digitado,
+            pedido_aplicado,
         )
         if not codigos_pedido:
             st.warning("Pedido não encontrado.")
@@ -1329,8 +1357,8 @@ with col_mapa:
     df_visual = aplicar_filtros_topo(
         df_visual_base,
         codigos_pedido=codigos_pedido,
-        codigo=codigo_digitado,
-        descricao="" if codigo_digitado else descricao_digitada,
+        codigo=codigo_aplicado,
+        descricao="" if codigo_aplicado else descricao_aplicada,
     )
 
 df_visivel = df_visual[df_visual["VisivelMapa"]] if not df_visual.empty else df_visual
