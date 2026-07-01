@@ -198,8 +198,21 @@ def aplicar_layout():
         }
 
         .page-logos img {
-            max-height: 30px;
-            max-width: 104px;
+            max-height: 36px;
+            max-width: 158px;
+            object-fit: contain;
+        }
+
+        .page-logos .goper-mark {
+            max-height: 36px;
+            max-width: 36px;
+        }
+
+        .logo-divider {
+            width: 3px;
+            height: 34px;
+            background: #000000;
+            display: inline-block;
         }
 
         .home-hero {
@@ -865,6 +878,11 @@ def aplicar_layout_mobile():
             max-width: 82px;
         }
 
+        .page-logos .goper-mark {
+            max-height: 24px;
+            max-width: 24px;
+        }
+
         .stButton > button {
             min-height: 44px;
         }
@@ -1011,31 +1029,31 @@ def _aplicar_layout_menu(menu_aberto):
 def render_cabecalho(titulo, subtitulo=""):
     titulo_html = escape(str(titulo))
     subtitulo_html = f"<p>{escape(str(subtitulo))}</p>" if subtitulo else ""
+    logo_branco = base64.b64encode(Path(LOGO_BRANCO).read_bytes()).decode("utf-8") if Path(LOGO_BRANCO).exists() else ""
+    logo_goper = base64.b64encode(Path(LOGO_PRETO).read_bytes()).decode("utf-8") if Path(LOGO_PRETO).exists() else ""
 
-    coluna_titulo, coluna_espaco, coluna_trendx, coluna_goper = st.columns(
-        [0.79, 0.125, 0.055, 0.03],
-        gap="small",
-        vertical_alignment="center",
-    )
+    logos_html = ""
+    if logo_branco and logo_goper:
+        logos_html = f"""
+        <div class="page-logos">
+            <img src="data:image/bmp;base64,{logo_branco}" alt="Trendx">
+            <span class="logo-divider"></span>
+            <img class="goper-mark" src="data:image/png;base64,{logo_goper}" alt="Goper">
+        </div>
+        """
 
-    with coluna_titulo:
-        st.markdown(
-            f"""
+    st.markdown(
+        f"""
+        <div class="page-head">
             <div class="page-title">
                 <h1>{titulo_html}</h1>
                 {subtitulo_html}
             </div>
-            """,
-            unsafe_allow_html=True,
-        )
-
-    with coluna_trendx:
-        if Path(LOGO_BRANCO).exists():
-            st.image(LOGO_BRANCO, width=104)
-
-    with coluna_goper:
-        if Path(LOGO_PRETO).exists():
-            st.image(LOGO_PRETO, width=34)
+            {logos_html}
+        </div>
+        """,
+        unsafe_allow_html=True,
+    )
 
 
 def preparar_pagina(titulo, subtitulo="", mobile=False, pagina=None):
