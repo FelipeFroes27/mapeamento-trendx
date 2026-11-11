@@ -22,6 +22,13 @@ from utils.historico import (
     registrar_historico
 )
 
+from utils.etiquetas_movimentacao import (
+    montar_item,
+    preparar_etiquetas,
+    render_painel_etiquetas,
+    limpar_etiquetas
+)
+
 from utils.ui import preparar_pagina
 
 
@@ -37,7 +44,34 @@ preparar_pagina(
 )
 
 if st.button("Voltar ao início"):
+    limpar_etiquetas("saida_etiquetas")
     st.switch_page("app.py")
+
+
+# ====================================
+# ETIQUETAS DO SALDO (SAÍDA PARCIAL)
+# ====================================
+
+if "saida_etiquetas" in st.session_state:
+
+    render_painel_etiquetas(
+        "saida_etiquetas"
+    )
+
+    if st.button(
+        "Nova saída",
+        use_container_width=True
+    ):
+
+        limpar_etiquetas("saida_etiquetas")
+
+        for chave in ["saida_vaga", "saida_produto", "dados_posicao"]:
+
+            st.session_state.pop(chave, None)
+
+        st.rerun()
+
+    st.stop()
 
 
 # ====================================
@@ -665,5 +699,50 @@ if confirmar:
             st.session_state.saida_processando = False
 
             st.session_state.saida_revisando = False
+
+
+            # ====================================
+            # ETIQUETAS DO SALDO (não bloqueia a saída)
+            # ====================================
+
+            if saldo_final > 0:
+
+                try:
+
+                    preparar_etiquetas(
+
+                        "saida_etiquetas",
+
+                        f"Saída parcial gravada na vaga {vaga}. "
+                        f"Etiquetas do saldo que ficou: {saldo_final}.",
+
+                        [
+                            montar_item(
+                                codigo,
+                                descricao,
+                                linha_produto_atual.get("Referencia", ""),
+                                saldo_final
+                            )
+                        ],
+
+                        "SAÍDA PARCIAL (SALDO)",
+
+                        vaga,
+
+                        usuario
+
+                    )
+
+                except Exception as erro:
+
+                    st.session_state.pop("saida_etiquetas", None)
+
+                    st.warning(
+                        f"Saída gravada, mas não foi possível preparar as etiquetas ({erro})."
+                    )
+
+                    st.stop()
+
+                st.rerun()
 
             st.switch_page("app.py")

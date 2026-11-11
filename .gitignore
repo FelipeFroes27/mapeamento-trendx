@@ -1,3 +1,6 @@
 venv/
 .streamlit/secrets.toml
 __pycache__/
+agente_impressao/config.ini
+agente_impressao/credenciais.toml
+agente_impressao/agente.log*

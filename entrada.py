@@ -19,6 +19,13 @@ from utils.historico import (
     registrar_historico
 )
 
+from utils.etiquetas_movimentacao import (
+    montar_item,
+    preparar_etiquetas,
+    render_painel_etiquetas,
+    limpar_etiquetas
+)
+
 from utils.ui import preparar_pagina
 
 
@@ -34,7 +41,34 @@ preparar_pagina(
 )
 
 if st.button("Voltar ao início"):
+    limpar_etiquetas("entrada_etiquetas")
     st.switch_page("app.py")
+
+
+# ====================================
+# ETIQUETAS DA ENTRADA GRAVADA
+# ====================================
+
+if "entrada_etiquetas" in st.session_state:
+
+    render_painel_etiquetas(
+        "entrada_etiquetas"
+    )
+
+    if st.button(
+        "Nova entrada",
+        use_container_width=True
+    ):
+
+        limpar_etiquetas("entrada_etiquetas")
+
+        for chave in ["entrada_vaga", "entrada_codigo", "entrada_produto_substituir", "dados_posicao"]:
+
+            st.session_state.pop(chave, None)
+
+        st.rerun()
+
+    st.stop()
 
 
 # ====================================
@@ -889,5 +923,49 @@ if confirmar:
         st.session_state.entrada_processando = False
 
         st.session_state.entrada_revisando = False
+
+
+        # ====================================
+        # ETIQUETAS (não bloqueia a entrada)
+        # ====================================
+
+        if codigo:
+
+            try:
+
+                preparar_etiquetas(
+
+                    "entrada_etiquetas",
+
+                    f"Entrada gravada na vaga {vaga}.",
+
+                    [
+                        montar_item(
+                            codigo,
+                            descricao,
+                            referencia,
+                            quantidade
+                        )
+                    ],
+
+                    "ENTRADA",
+
+                    vaga,
+
+                    usuario
+
+                )
+
+            except Exception as erro:
+
+                st.session_state.pop("entrada_etiquetas", None)
+
+                st.warning(
+                    f"Entrada gravada, mas não foi possível preparar as etiquetas ({erro})."
+                )
+
+                st.stop()
+
+            st.rerun()
 
         st.switch_page("app.py")
