@@ -7,7 +7,7 @@ from oauth2client.service_account import (
 )
 
 
-@st.cache_resource
+@st.cache_resource(show_spinner=False)
 def conectar_google_sheets():
 
     scope = [
@@ -57,7 +57,7 @@ def ler_aba(nome_planilha, nome_aba):
     )
 
 
-@st.cache_resource
+@st.cache_resource(show_spinner=False)
 def abrir_planilha(nome_planilha):
 
     cliente = conectar_google_sheets()
@@ -65,7 +65,7 @@ def abrir_planilha(nome_planilha):
     return cliente.open(nome_planilha)
 
 
-@st.cache_resource
+@st.cache_resource(show_spinner=False)
 def abrir_aba(nome_planilha, nome_aba):
 
     planilha = abrir_planilha(

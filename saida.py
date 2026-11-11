@@ -29,6 +29,15 @@ from utils.etiquetas_movimentacao import (
     limpar_etiquetas
 )
 
+from utils.fila_impressao import FUSO_BRASILIA
+
+from utils.gravacao import (
+    LinhaMudou,
+    conferir_linha,
+    conferir_e_gravar,
+    gravar_linha
+)
+
 from utils.ui import preparar_pagina
 
 
@@ -53,6 +62,10 @@ if st.button("Voltar ao início"):
 # ====================================
 
 if "saida_etiquetas" in st.session_state:
+
+    st.session_state.saida_processando = False
+
+    st.session_state.saida_revisando = False
 
     render_painel_etiquetas(
         "saida_etiquetas"
@@ -422,6 +435,10 @@ confirmar = st.session_state.saida_processando
 
 if confirmar:
 
+    # Desliga já: se a gravação falhar no meio (erro do Google), a próxima
+    # interação não pode gravar a movimentação de novo sozinha.
+    st.session_state.saida_processando = False
+
     # ====================================
     # VALIDAÇÕES
     # ====================================
@@ -548,7 +565,7 @@ if confirmar:
                 "POSIÇÃO"
             )
 
-            data_atual = datetime.now().strftime(
+            data_atual = datetime.now(FUSO_BRASILIA).strftime(
                 "%d/%m/%Y %H:%M:%S"
             )
 
@@ -576,21 +593,25 @@ if confirmar:
 
             if saldo_final > 0:
 
-                aba_posicao.update(
+                try:
 
-                    f"F{linha_real}",
+                    conferir_e_gravar(
+                        aba_posicao,
+                        linha_real,
+                        vaga,
+                        codigo,
+                        {
+                            "Quantidade": saldo_final,
+                            "Data": data_atual
+                        },
+                        quantidade=quantidade_atual
+                    )
 
-                    [[saldo_final]]
+                except LinhaMudou:
 
-                )
-
-                aba_posicao.update(
-
-                    f"B{linha_real}",
-
-                    [[data_atual]]
-
-                )
+                    erro_saida(
+                        "A vaga mudou enquanto você operava. Atualize a tela e confirme novamente."
+                    )
 
 
             # ====================================
@@ -603,6 +624,24 @@ if confirmar:
                     resultados_vaga_atual
                 )
 
+                # Confere antes: outro coletor pode ter apagado uma linha acima
+                # (as linhas sobem) ou mexido no saldo.
+                try:
+
+                    conferir_linha(
+                        aba_posicao,
+                        linha_real,
+                        vaga,
+                        codigo,
+                        quantidade=quantidade_atual
+                    )
+
+                except LinhaMudou:
+
+                    erro_saida(
+                        "A vaga mudou enquanto você operava. Atualize a tela e confirme novamente."
+                    )
+
 
                 # ====================================
                 # ULTIMO PRODUTO
@@ -610,60 +649,18 @@ if confirmar:
 
                 if ultimo_produto:
 
-                    aba_posicao.update(
-
-                        f"A{linha_real}",
-
-                        [["DISPONIVEL"]]
-
-                    )
-
-                    aba_posicao.update(
-
-                        f"B{linha_real}",
-
-                        [[data_atual]]
-
-                    )
-
-                    aba_posicao.update(
-
-                        f"D{linha_real}",
-
-                        [[""]]
-
-                    )
-
-                    aba_posicao.update(
-
-                        f"E{linha_real}",
-
-                        [[""]]
-
-                    )
-
-                    aba_posicao.update(
-
-                        f"F{linha_real}",
-
-                        [[""]]
-
-                    )
-
-                    aba_posicao.update(
-
-                        f"G{linha_real}",
-
-                        [[""]]
-
-                    )
-
-                    aba_posicao.update(
-
-                        f"H{linha_real}",
-
-                        [[""]]
-
+                    gravar_linha(
+                        aba_posicao,
+                        linha_real,
+                        {
+                            "Status": "DISPONIVEL",
+                            "Data": data_atual,
+                            "Código": "",
+                            "Descrição": "",
+                            "Quantidade": "",
+                            "Referencia": "",
+                            "Observações": ""
+                        }
                     )
 
 
@@ -682,16 +679,29 @@ if confirmar:
             # HISTÓRICO
             # ====================================
 
-            registrar_historico(
+            erro_historico = ""
 
-                data_atual,
-                vaga,
-                codigo,
-                descricao,
-                quantidade_saida * -1,
-                usuario
+            try:
 
-            )
+                registrar_historico(
+
+                    data_atual,
+                    vaga,
+                    codigo,
+                    descricao,
+                    quantidade_saida * -1,
+                    usuario
+
+                )
+
+            except Exception as erro:
+
+                # A POSIÇÃO já foi gravada: avisa em vez de perder o registro em silêncio
+                erro_historico = (
+                    f"A vaga foi atualizada, mas o HISTÓRICO não foi gravado ({erro}). "
+                    f"Anote para lançar manualmente: {data_atual} | {vaga} | {codigo} | "
+                    f"{descricao} | {int(quantidade_saida) * -1} | {usuario}"
+                )
 
 
             st.session_state.ultima_saida_assinatura = assinatura_saida
@@ -744,13 +754,19 @@ if confirmar:
 
                         vaga,
 
-                        usuario
+                        usuario,
+
+                        aviso=erro_historico
 
                     )
 
                 except Exception as erro:
 
                     st.session_state.pop("saida_etiquetas", None)
+
+                    if erro_historico:
+
+                        st.error(erro_historico)
 
                     st.warning(
                         f"Saída gravada, mas não foi possível preparar as etiquetas ({erro})."
@@ -759,5 +775,11 @@ if confirmar:
                     st.stop()
 
                 st.rerun()
+
+            if erro_historico:
+
+                st.error(erro_historico)
+
+                st.stop()
 
             st.switch_page("app.py")

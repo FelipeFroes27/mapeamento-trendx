@@ -27,13 +27,14 @@ VALIDADE_CADASTRO = 60 * 60  # 1 hora
 COPIAS_MAXIMO = 5000
 INTERVALO_STATUS = 5  # segundos entre consultas do status da impressão
 LIMITE_ESPERA = 3 * 60  # depois disso para de consultar e avisa
+INTERVALO_REENVIO = 10  # segundos; protege a reimpressão contra clique duplo
 
 
 # ====================================
 # CADASTRO (cache de 1 hora)
 # ====================================
 
-@st.cache_resource
+@st.cache_resource(show_spinner=False)
 def _cache_cadastro():
     # cache_resource não é apagado pelo st.cache_data.clear() das movimentações
     return {"lido_em": 0.0, "produtos": {}}
@@ -123,7 +124,7 @@ def montar_item(codigo, descricao, referencia, quantidade):
 # FILA DE IMPRESSÃO
 # ====================================
 
-@st.cache_resource
+@st.cache_resource(show_spinner=False)
 def _aba_fila():
     return fila.abrir_ou_criar_aba(
         abrir_planilha(fila.PLANILHA)
@@ -173,7 +174,7 @@ def _enviar_e_guardar(pacote, itens):
         pacote["erro_fila"] = str(erro)
 
 
-def preparar_etiquetas(chave, titulo, itens, movimentacao, vaga, usuario):
+def preparar_etiquetas(chave, titulo, itens, movimentacao, vaga, usuario, aviso=""):
     """Envia as etiquetas da movimentação gravada para a impressora e guarda para o painel."""
     pacote = {
         "titulo": titulo,
@@ -183,6 +184,7 @@ def preparar_etiquetas(chave, titulo, itens, movimentacao, vaga, usuario):
         "usuario": usuario,
         "envios": [],
         "erro_fila": "",
+        "aviso": aviso,
     }
     _enviar_e_guardar(pacote, [dict(item) for item in itens])
     st.session_state[chave] = pacote
@@ -264,6 +266,11 @@ def render_painel_etiquetas(chave):
         pacote["titulo"]
     )
 
+    if pacote.get("aviso"):
+        st.error(
+            pacote["aviso"]
+        )
+
     if pacote["erro_fila"]:
         st.error(
             f"Não foi possível enviar para a impressora ({pacote['erro_fila']}). "
@@ -324,7 +331,10 @@ def render_painel_etiquetas(chave):
             use_container_width=True,
             key=f"{chave}_reenviar",
         ):
-            _enviar_e_guardar(pacote, reimpressao)
+            # Clique duplo: ignora o segundo envio feito logo em seguida.
+            ultimo = pacote["envios"][-1]["enviado_em"] if pacote["envios"] else 0
+            if time.time() - ultimo > INTERVALO_REENVIO:
+                _enviar_e_guardar(pacote, reimpressao)
             st.rerun()
 
         # A movimentação já está gravada: se o PDF falhar, só avisa.

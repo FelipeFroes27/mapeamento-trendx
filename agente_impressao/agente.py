@@ -13,6 +13,7 @@ Uso:
 import argparse
 import configparser
 import logging
+import os
 import sys
 import time
 import tomllib
@@ -27,6 +28,28 @@ from utils.etiquetas import gerar_etiquetas_pdf  # noqa: E402
 
 
 log = logging.getLogger("agente")
+
+COMPUTADOR = os.environ.get("COMPUTERNAME", "computador")
+
+# Bits de status da impressora (winspool) que impedem a impressão
+PROBLEMAS_IMPRESSORA = {
+    0x00000080: "impressora offline",
+    0x00001000: "impressora indisponível",
+    0x00000010: "sem etiqueta",
+    0x00000008: "etiqueta enroscada",
+    0x00400000: "tampa aberta",
+    0x00040000: "sem ribbon",
+    0x00100000: "impressora pedindo intervenção",
+    0x00000002: "impressora em erro",
+}
+ATRIBUTO_OFFLINE = 0x00000400  # "Usar impressora offline" / USB desconectada
+
+# Bits de status de um trabalho preso na fila do Windows
+PROBLEMAS_TRABALHO = 0x00000002 | 0x00000020 | 0x00000040 | 0x00000200 | 0x00010000
+
+
+class ImpressoraIndisponivel(Exception):
+    pass
 
 
 # ====================================
@@ -78,7 +101,58 @@ def listar_impressoras():
     ]
 
 
-def imprimir_pdf(pdf, impressora, arquivo_saida=None):
+def verificar_impressora(impressora):
+    """Erro se a impressora estiver offline, desconectada ou com problema."""
+    import win32print
+
+    handle = win32print.OpenPrinter(impressora)
+    try:
+        info = win32print.GetPrinter(handle, 2)
+    finally:
+        win32print.ClosePrinter(handle)
+
+    if info["Attributes"] & ATRIBUTO_OFFLINE:
+        raise ImpressoraIndisponivel("impressora offline ou desconectada")
+
+    problemas = [texto for bit, texto in PROBLEMAS_IMPRESSORA.items() if info["Status"] & bit]
+    if problemas:
+        raise ImpressoraIndisponivel(", ".join(problemas))
+
+
+def aguardar_saida_da_fila(impressora, nome_documento, paginas):
+    """Espera o trabalho sair da fila do Windows. Se travar, cancela e dá erro.
+
+    Sem isso, uma etiqueta presa (impressora desligada, sem etiqueta...) seria
+    marcada como IMPRESSO e sairia horas depois, quando a impressora voltasse.
+    """
+    import win32print
+
+    limite = time.time() + 30 + 2 * paginas
+    handle = win32print.OpenPrinter(impressora)
+    try:
+        while True:
+            trabalhos = [
+                trabalho for trabalho in win32print.EnumJobs(handle, 0, 999, 1)
+                if trabalho["pDocument"] == nome_documento
+            ]
+            if not trabalhos:
+                return
+
+            travado = any(trabalho["Status"] & PROBLEMAS_TRABALHO for trabalho in trabalhos)
+            if travado or time.time() > limite:
+                for trabalho in trabalhos:
+                    win32print.SetJob(handle, trabalho["JobId"], 0, None, win32print.JOB_CONTROL_DELETE)
+                raise ImpressoraIndisponivel(
+                    "a etiqueta ficou presa na fila do Windows e foi cancelada "
+                    "(impressora desligada, desconectada ou sem etiqueta?)"
+                )
+
+            time.sleep(0.5)
+    finally:
+        win32print.ClosePrinter(handle)
+
+
+def imprimir_pdf(pdf, impressora, arquivo_saida=None, nome_documento="Etiquetas Mapeamento Trendx"):
     """Imprime cada página do PDF em tamanho real (100 x 30 mm) pelo driver do Windows."""
     import pypdfium2
     import win32con
@@ -116,7 +190,7 @@ def imprimir_pdf(pdf, impressora, arquivo_saida=None):
         margem_x = dc.GetDeviceCaps(win32con.PHYSICALOFFSETX)
         margem_y = dc.GetDeviceCaps(win32con.PHYSICALOFFSETY)
 
-        dc.StartDoc("Etiquetas Mapeamento Trendx", arquivo_saida)
+        dc.StartDoc(nome_documento, arquivo_saida)
         cache = {}
 
         for indice in range(len(documento)):
@@ -145,9 +219,13 @@ def imprimir_pdf(pdf, impressora, arquivo_saida=None):
             dc.EndPage()
 
         dc.EndDoc()
+        paginas = len(documento)
     finally:
         dc.DeleteDC()
         documento.close()
+
+    if arquivo_saida is None:
+        aguardar_saida_da_fila(impressora, nome_documento, paginas)
 
 
 # ====================================
@@ -192,16 +270,28 @@ def processar_pendentes(aba, impressora):
             continue
 
         item = fila.item_da_linha(registro)
+
+        try:
+            verificar_impressora(impressora)
+        except Exception as erro:
+            log.warning("Impressora indisponível para %s (linha %s): %s", item["codigo"], numero, erro)
+            atualizar_linha(aba, numero, fila.ERRO, f"{COMPUTADOR} / {impressora}: {erro}")
+            continue
+
         atualizar_linha(aba, numero, fila.IMPRIMINDO)
 
         try:
-            imprimir_pdf(gerar_etiquetas_pdf([item]), impressora)
+            imprimir_pdf(
+                gerar_etiquetas_pdf([item]),
+                impressora,
+                nome_documento=f"Etiquetas {registro.get('ID', '')}",
+            )
         except Exception as erro:
             log.exception("Erro ao imprimir %s (linha %s)", item["codigo"], numero)
-            atualizar_linha(aba, numero, fila.ERRO, f"Falha na impressora: {erro}")
+            atualizar_linha(aba, numero, fila.ERRO, f"{COMPUTADOR} / {impressora}: {erro}")
             continue
 
-        atualizar_linha(aba, numero, fila.IMPRESSO)
+        atualizar_linha(aba, numero, fila.IMPRESSO, f"{COMPUTADOR} / {impressora}")
         log.info("Impresso %s x%s (%s)", item["codigo"], item["copias"], registro.get("Movimentação", ""))
 
 
@@ -267,8 +357,9 @@ def main():
             "quantidade": None,
             "copias": 1,
         }
+        verificar_impressora(config["impressora"])
         imprimir_pdf(gerar_etiquetas_pdf([item]), config["impressora"])
-        print("Etiqueta de teste enviada para", config["impressora"])
+        print("Etiqueta de teste impressa em", config["impressora"])
         return
 
     rodar(config)

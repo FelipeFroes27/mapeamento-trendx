@@ -26,6 +26,13 @@ from utils.etiquetas_movimentacao import (
     limpar_etiquetas
 )
 
+from utils.fila_impressao import FUSO_BRASILIA
+
+from utils.gravacao import (
+    LinhaMudou,
+    conferir_e_gravar
+)
+
 from utils.ui import preparar_pagina
 
 
@@ -50,6 +57,10 @@ if st.button("Voltar ao início"):
 # ====================================
 
 if "entrada_etiquetas" in st.session_state:
+
+    st.session_state.entrada_processando = False
+
+    st.session_state.entrada_revisando = False
 
     render_painel_etiquetas(
         "entrada_etiquetas"
@@ -502,6 +513,10 @@ confirmar = st.session_state.entrada_processando
 
 if confirmar:
 
+    # Desliga já: se a gravação falhar no meio (erro do Google), a próxima
+    # interação não pode gravar a movimentação de novo sozinha.
+    st.session_state.entrada_processando = False
+
     # ====================================
     # VALIDAÇÕES
     # ====================================
@@ -602,7 +617,7 @@ if confirmar:
                 "A vaga já existe. Para cadastrar apenas uma vaga vazia, informe uma vaga nova."
             )
 
-        data_atual = datetime.now().strftime(
+        data_atual = datetime.now(FUSO_BRASILIA).strftime(
             "%d/%m/%Y %H:%M:%S"
         )
 
@@ -702,33 +717,36 @@ if confirmar:
                         quantidade_atual + quantidade
                     )
 
-                    aba_posicao.update(
+                    valores_somar = {
+                        "Quantidade": nova_quantidade,
+                        "Data": data_atual
+                    }
 
-                        f"F{linha_real}",
-                        [[nova_quantidade]]
+                    # Só troca referência/observação se o usuário escreveu algo agora
+                    if referencia:
 
-                    )
+                        valores_somar["Referencia"] = referencia
 
-                    aba_posicao.update(
+                    if observacoes:
 
-                        f"B{linha_real}",
-                        [[data_atual]]
+                        valores_somar["Observações"] = observacoes
 
-                    )
+                    try:
 
-                    aba_posicao.update(
+                        conferir_e_gravar(
+                            aba_posicao,
+                            linha_real,
+                            vaga,
+                            codigo,
+                            valores_somar,
+                            quantidade=quantidade_atual
+                        )
 
-                        f"G{linha_real}",
-                        [[referencia]]
+                    except LinhaMudou:
 
-                    )
-
-                    aba_posicao.update(
-
-                        f"H{linha_real}",
-                        [[observacoes]]
-
-                    )
+                        erro_entrada(
+                            "A vaga mudou enquanto você operava. Atualize a tela e confirme novamente."
+                        )
 
                     break
 
@@ -794,47 +812,28 @@ if confirmar:
                                 "_linha_planilha"
                             ]
 
-                            aba_posicao.update(
+                            try:
 
-                                f"D{linha_real}",
-                                [[codigo]]
+                                conferir_e_gravar(
+                                    aba_posicao,
+                                    linha_real,
+                                    vaga,
+                                    codigo_substituir,
+                                    {
+                                        "Código": codigo,
+                                        "Descrição": descricao,
+                                        "Quantidade": quantidade,
+                                        "Referencia": referencia,
+                                        "Observações": observacoes,
+                                        "Data": data_atual
+                                    }
+                                )
 
-                            )
+                            except LinhaMudou:
 
-                            aba_posicao.update(
-
-                                f"E{linha_real}",
-                                [[descricao]]
-
-                            )
-
-                            aba_posicao.update(
-
-                                f"F{linha_real}",
-                                [[quantidade]]
-
-                            )
-
-                            aba_posicao.update(
-
-                                f"G{linha_real}",
-                                [[referencia]]
-
-                            )
-
-                            aba_posicao.update(
-
-                                f"H{linha_real}",
-                                [[observacoes]]
-
-                            )
-
-                            aba_posicao.update(
-
-                                f"B{linha_real}",
-                                [[data_atual]]
-
-                            )
+                                erro_entrada(
+                                    "A vaga mudou enquanto você operava. Atualize a tela e confirme novamente."
+                                )
 
                             break
 
@@ -849,72 +848,60 @@ if confirmar:
                         "_linha_planilha"
                     ]
 
-                    aba_posicao.update(
+                    try:
 
-                        f"A{linha_real}",
-                        [["OCUPADO"]]
+                        conferir_e_gravar(
+                            aba_posicao,
+                            linha_real,
+                            vaga,
+                            "",
+                            {
+                                "Status": "OCUPADO",
+                                "Data": data_atual,
+                                "Código": codigo,
+                                "Descrição": descricao,
+                                "Quantidade": quantidade,
+                                "Referencia": referencia,
+                                "Observações": observacoes
+                            }
+                        )
 
-                    )
+                    except LinhaMudou:
 
-                    aba_posicao.update(
-
-                        f"B{linha_real}",
-                        [[data_atual]]
-
-                    )
-
-                    aba_posicao.update(
-
-                        f"D{linha_real}",
-                        [[codigo]]
-
-                    )
-
-                    aba_posicao.update(
-
-                        f"E{linha_real}",
-                        [[descricao]]
-
-                    )
-
-                    aba_posicao.update(
-
-                        f"F{linha_real}",
-                        [[quantidade]]
-
-                    )
-
-                    aba_posicao.update(
-
-                        f"G{linha_real}",
-                        [[referencia]]
-
-                    )
-
-                    aba_posicao.update(
-
-                        f"H{linha_real}",
-                        [[observacoes]]
-
-                    )
+                        erro_entrada(
+                            "A vaga mudou enquanto você operava. Atualize a tela e confirme novamente."
+                        )
 
 
         # ====================================
         # HISTÓRICO
         # ====================================
 
+        erro_historico = ""
+
         if codigo:
 
-            registrar_historico(
+            try:
 
-                data_atual,
-                vaga,
-                codigo,
-                descricao,
-                quantidade,
-                usuario
+                registrar_historico(
 
-            )
+                    data_atual,
+                    vaga,
+                    codigo,
+                    descricao,
+                    quantidade,
+                    usuario
+
+                )
+
+            except Exception as erro:
+
+                # A POSIÇÃO já foi gravada: avisa em vez de perder o registro em silêncio
+                erro_historico = (
+                    f"A vaga foi atualizada, mas o HISTÓRICO não foi gravado ({erro}). "
+                    f"Anote para lançar manualmente: {data_atual} | {vaga} | {codigo} | "
+                    f"{descricao} | {int(quantidade)} | {usuario}"
+                )
 
 
         st.session_state.ultima_entrada_assinatura = assinatura_entrada
@@ -966,13 +953,19 @@ if confirmar:
 
                     vaga,
 
-                    usuario
+                    usuario,
+
+                    aviso=erro_historico
 
                 )
 
             except Exception as erro:
 
                 st.session_state.pop("entrada_etiquetas", None)
+
+                if erro_historico:
+
+                    st.error(erro_historico)
 
                 st.warning(
                     f"Entrada gravada, mas não foi possível preparar as etiquetas ({erro})."
@@ -981,5 +974,11 @@ if confirmar:
                 st.stop()
 
             st.rerun()
+
+        if erro_historico:
+
+            st.error(erro_historico)
+
+            st.stop()
 
         st.switch_page("app.py")

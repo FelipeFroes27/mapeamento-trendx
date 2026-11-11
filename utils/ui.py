@@ -26,6 +26,11 @@ def atualizar_cache_ao_navegar(pagina):
     for chave in CACHE_KEYS_DADOS:
         st.session_state.pop(chave, None)
 
+    # Clique duplo em CONFIRMAR pode deixar a outra tela "processando";
+    # ao trocar de página, a movimentação nunca continua sozinha.
+    for chave in ["entrada_processando", "entrada_revisando", "saida_processando", "saida_revisando"]:
+        st.session_state.pop(chave, None)
+
     st.session_state["_pagina_atual_cache"] = pagina
 
 
