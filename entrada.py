@@ -451,11 +451,20 @@ if not st.session_state.entrada_revisando:
 
         st.session_state.entrada_revisando = True
 
+        st.session_state.entrada_imprimir = False
+
         st.rerun()
 
 else:
 
     render_revisao_entrada()
+
+    if codigo:
+
+        st.checkbox(
+            "Realizar impressão da etiqueta",
+            key="entrada_imprimir"
+        )
 
     col_editar, col_confirmar = st.columns(2)
 
@@ -924,12 +933,17 @@ if confirmar:
 
         st.session_state.entrada_revisando = False
 
+        imprimir_etiqueta = st.session_state.pop(
+            "entrada_imprimir",
+            False
+        )
+
 
         # ====================================
-        # ETIQUETAS (não bloqueia a entrada)
+        # ETIQUETAS (só com a flag marcada; não bloqueia a entrada)
         # ====================================
 
-        if codigo:
+        if codigo and imprimir_etiqueta:
 
             try:
 

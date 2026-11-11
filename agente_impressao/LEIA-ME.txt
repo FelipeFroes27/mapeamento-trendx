@@ -1,0 +1,31 @@
+AGENTE DE IMPRESSAO - MAPEAMENTO TRENDX
+=======================================
+
+Imprime sozinho, na Honeywell ligada por USB, as etiquetas das movimentacoes
+feitas no app (aba "FILA IMPRESSAO" da planilha Mapeamento Trendx).
+
+INSTALACAO (uma vez)
+1. Instale o Python 3.12 pelo python.org.
+   Na primeira tela do instalador, marque "Add python.exe to PATH".
+2. Ligue a impressora Honeywell no USB e espere o Windows instalar.
+   Ela deve aparecer em Configuracoes > Impressoras e scanners.
+3. Extraia este .zip numa pasta fixa (ex.: C:\AgenteEtiquetas).
+   Mantenha as pastas "agente_impressao" e "utils" lado a lado.
+4. Coloque o arquivo credenciais.toml dentro da pasta agente_impressao
+   (ele NAO vem no .zip, peca para o Felipe).
+5. Abra agente_impressao\instalar.bat (duplo clique).
+   No final ele lista as impressoras. Confira se o nome da Honeywell e igual
+   ao do config.ini (linha "impressora ="). Se for diferente, ajuste.
+
+TESTE
+   Abra um prompt na pasta agente_impressao e rode:
+       python agente.py --teste
+   Deve sair uma etiqueta de teste.
+
+DEIXAR RODANDO SEMPRE
+1. Win + R, digite shell:startup e de Enter.
+2. Crie ali um atalho para agente_impressao\iniciar_agente.bat.
+3. Configuracoes > Sistema > Energia: nunca suspender; ao fechar a tampa: nao fazer nada.
+4. Rode iniciar_agente.bat uma vez (ou reinicie o notebook).
+
+O log fica em agente_impressao\agente.log.

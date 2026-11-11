@@ -370,11 +370,21 @@ if not st.session_state.saida_revisando:
 
         st.session_state.saida_revisando = True
 
+        st.session_state.saida_imprimir = False
+
         st.rerun()
 
 else:
 
     render_revisao_saida()
+
+    # Só a saída parcial deixa saldo na vaga para etiquetar
+    if linha_produto and quantidade_atual - int(quantidade_saida) > 0:
+
+        st.checkbox(
+            "Realizar impressão da etiqueta",
+            key="saida_imprimir"
+        )
 
     col_editar, col_confirmar = st.columns(2)
 
@@ -700,12 +710,17 @@ if confirmar:
 
             st.session_state.saida_revisando = False
 
+            imprimir_etiqueta = st.session_state.pop(
+                "saida_imprimir",
+                False
+            )
+
 
             # ====================================
-            # ETIQUETAS DO SALDO (não bloqueia a saída)
+            # ETIQUETAS DO SALDO (só com a flag marcada; não bloqueia a saída)
             # ====================================
 
-            if saldo_final > 0:
+            if saldo_final > 0 and imprimir_etiqueta:
 
                 try:
 
